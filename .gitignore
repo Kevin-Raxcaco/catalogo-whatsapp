@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build output
+dist/
+frontend/dist/
+
+# Environment variables (contain secrets)
+.env
+frontend/.env
+
+# Vite cache
+frontend/.vite/
+.vite/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# PocketBase data (local database, not for git)
+server/pb_data/
+pocketbase.exe
