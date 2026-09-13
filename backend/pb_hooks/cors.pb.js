@@ -1,3 +1,6 @@
-// CORS hook — solo necesario en producción cuando el frontend
-// está en un dominio distinto al backend (ej: Vercel + atomchat.dev).
-// En desarrollo local el proxy de Vite maneja la misma origen.
+routerAdd("OPTIONS", "/*path", (e) => {
+  e.response.header().set("Access-Control-Allow-Origin", "*")
+  e.response.header().set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+  e.response.header().set("Access-Control-Allow-Headers", "Content-Type, Authorization, ngrok-skip-browser-warning")
+  return e.json(204, {})
+})
