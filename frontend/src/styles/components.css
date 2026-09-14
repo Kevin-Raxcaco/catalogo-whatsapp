@@ -517,9 +517,69 @@
   line-height: 1.5;
 }
 
-/* Responsive */
+/* ============================================================
+   RESPONSIVE — mobile first adjustments (≤ 600px)
+   ============================================================ */
 @media (max-width: 600px) {
+
+  /* Grid de productos: 2 columnas en móvil */
   .auto-fill-220 { grid-template-columns: repeat(2, 1fr); }
+  .gap-16 { gap: 10px; }
+
+  /* Page padding reducido */
+  .page { padding: 20px 14px 100px; }
+
+  /* Catalog hero más compacto */
+  .catalog-hero {
+    padding: 16px 18px;
+    gap: 14px;
+    border-radius: 18px;
+  }
   .catalog-hero__meta { display: none; }
-  .modal__image { height: 180px; font-size: 56px; }
+  .catalog-hero__name { font-size: 18px; }
+  .catalog-hero__desc { font-size: 13px; }
+  .catalog-hero__logo { width: 46px; height: 46px; font-size: 24px; }
+
+  /* Product card en 2 columnas */
+  .product-card__image { height: 130px; font-size: 38px; }
+  .product-card__body  { padding: 10px 12px 12px; }
+  .product-card__name  { font-size: 12.5px; }
+  .product-card__price { font-size: 15px; margin-bottom: 8px; }
+  .product-card__add-btn {
+    font-size: 11px; padding: 6px 10px;
+    width: 100%; justify-content: center;
+  }
+  .qty-btn  { width: 26px; height: 26px; font-size: 14px; }
+  .qty-count { font-size: 13px; }
+
+  /* Modal centrado en móvil — ocupa casi toda la pantalla */
+  .modal-overlay { padding: 12px 10px; align-items: flex-end; }
+  .modal {
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
+  }
+  .cart-sheet { border-radius: 20px 20px 0 0; }
+  .modal__image { height: 180px; font-size: 56px; margin: 12px 14px; }
+  .modal__body  { padding: 0 18px 28px; }
+  .modal__name  { font-size: 18px; }
+  .modal__price { font-size: 22px; margin-bottom: 14px; }
+
+  /* Cart sheet en móvil */
+  .cart-sheet__items { max-height: 36vh; }
+  .cart-sheet__footer { padding: 14px 18px max(28px, env(safe-area-inset-bottom, 28px)); }
+
+  /* Cart bar — padding para iPhone con home indicator */
+  .cart-bar { padding: 10px 14px max(18px, env(safe-area-inset-bottom, 18px)); }
+  .cart-bar__inner { padding: 12px 14px; }
+  .cart-bar__cta { font-size: 12px; padding: 8px 14px; }
+
+  /* Navbar */
+  .navbar { padding: 0 14px; }
+  .navbar__logo-name { font-size: 13.5px; }
+  .navbar__tabs { gap: 2px; }
+  .navbar__tab { padding: 5px 10px; font-size: 12px; }
+
+  /* Botones generales */
+  .btn--wa { font-size: 14px; padding: 14px 20px; }
+  .btn { font-size: 13px; padding: 9px 16px; }
 }
