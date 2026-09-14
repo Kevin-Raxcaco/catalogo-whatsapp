@@ -61,7 +61,7 @@ export class CartSheet {
             </svg>
             Continuar por WhatsApp
           </button>
-          <p class="cart-sheet__hint">
+          <p class="cart-sheet__hint" id="cs-hint">
             Se abrirá WhatsApp con el resumen de tu pedido listo para enviar.
           </p>
         </div>
@@ -209,11 +209,15 @@ export class CartSheet {
   _resetFooter() {
     const footer = this._el.querySelector('.cart-sheet__footer')
     if (!footer) return
+    const { name, phone } = this._urlContact
+    const fromUrl = !!(name && phone)
+
     footer.innerHTML = `
       <div class="cart-sheet__total-row">
         <span>Total estimado</span>
         <span class="cart-sheet__total" id="cs-total">—</span>
       </div>
+      ${fromUrl ? '' : `
       <div class="cart-sheet__divider"></div>
       <p class="cart-sheet__contact-title">¿Cómo te contactamos?</p>
       <div class="cart-sheet__contact-form">
@@ -231,6 +235,7 @@ export class CartSheet {
           <span class="cs-field-hint">Ejemplo: 502 5555 1234 (Guatemala) · 52 1 55 1234 5678 (México)</span>
         </div>
       </div>
+      `}
       <div class="cs-error" id="cs-error" hidden></div>
       <button class="btn btn--wa" id="cs-wa">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -238,24 +243,22 @@ export class CartSheet {
         </svg>
         Continuar por WhatsApp
       </button>
-      <p class="cart-sheet__hint">Se abrirá WhatsApp con el resumen de tu pedido listo para enviar.</p>
+      <p class="cart-sheet__hint">
+        ${fromUrl
+          ? 'Tu agente de WhatsApp recibirá tu selección y continuará la conversación contigo.'
+          : 'Se abrirá WhatsApp con el resumen de tu pedido listo para enviar.'}
+      </p>
     `
     footer.querySelector('#cs-wa').addEventListener('click', () => this._goWhatsApp())
-    footer.querySelector('#cs-name').addEventListener('input', () => this._hideError())
-    footer.querySelector('#cs-phone').addEventListener('input', () => this._hideError())
+    if (!fromUrl) {
+      footer.querySelector('#cs-name').addEventListener('input', () => this._hideError())
+      footer.querySelector('#cs-phone').addEventListener('input', () => this._hideError())
+    }
   }
 
   open() {
     this._resetFooter()
     this._renderItems()
-
-    const { name, phone } = this._urlContact
-    if (name && phone) {
-      const form = this._el.querySelector('.cart-sheet__contact-form')
-      const title = this._el.querySelector('.cart-sheet__contact-title')
-      if (form)  form.hidden  = true
-      if (title) title.hidden = true
-    }
 
     this._el.classList.add('modal-overlay--open')
     document.body.style.overflow = 'hidden'
