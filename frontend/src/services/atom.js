@@ -25,7 +25,7 @@ export async function notifyCartSelected(name, phone, items) {
 
   try {
     await fetch(CLIENTS_URL, {
-      method: 'PATCH',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${CLIENTS_TOKEN}`,
