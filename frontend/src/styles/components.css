@@ -243,6 +243,7 @@
 }
 .modal-overlay--open { opacity: 1; pointer-events: all; }
 .modal {
+  position: relative;
   background: #fff;
   border-radius: 24px 24px 0 0;
   width: 100%; max-width: 540px; max-height: 92vh;
@@ -258,6 +259,17 @@
   border-radius: var(--radius-pill);
   margin: 12px auto 0;
 }
+.modal__close {
+  position: absolute; top: 14px; right: 16px;
+  width: 32px; height: 32px;
+  border-radius: 50%; border: none;
+  background: rgba(30, 41, 57, 0.08);
+  color: var(--color-text-muted);
+  font-size: 14px; cursor: pointer; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal__close:hover { background: rgba(30, 41, 57, 0.14); }
+.modal__sku { font-size: 12px; color: var(--color-text-muted); margin-bottom: 16px; }
 .modal__image {
   height: 230px;
   display: flex; align-items: center; justify-content: center;

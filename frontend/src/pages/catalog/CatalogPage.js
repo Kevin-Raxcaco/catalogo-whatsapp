@@ -1,6 +1,7 @@
 import { getCatalogBySlug } from '../../services/catalogs.js'
 import { getProducts }       from '../../services/products.js'
 import { ProductCard }       from '../../components/ProductCard.js'
+import { ProductModal }      from '../../components/ProductModal.js'
 import { CartBar }           from '../../components/CartBar.js'
 import { CartSheet }         from '../../components/CartSheet.js'
 import { getCatalogSlug }    from '../../utils/url.js'
@@ -39,8 +40,9 @@ export async function CatalogPage(container) {
     <div class="grid auto-fill-220 gap-16" id="products-grid" style="padding-bottom:100px;"></div>
   `
 
-  const grid = container.querySelector('#products-grid')
-  productList.forEach(p => grid.appendChild(ProductCard(p)))
+  const modal   = new ProductModal()
+  const grid    = container.querySelector('#products-grid')
+  productList.forEach(p => grid.appendChild(ProductCard(p, (product) => modal.open(product))))
 
   const sheet  = new CartSheet(catalog)
   const cartBar = new CartBar(() => sheet.open())
