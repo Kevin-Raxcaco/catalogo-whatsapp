@@ -1,6 +1,6 @@
 import { addItem } from '../services/cart.js'
 
-const HIDDEN_FIELDS = new Set(['id', 'collectionId', 'collectionName', 'created', 'updated', 'catalog', 'order', 'name', 'price', 'image', 'sku', '_bg', '_emoji'])
+const HIDDEN_FIELDS = new Set(['id', 'collectionId', 'collectionName', 'created', 'updated', 'catalog', 'order', 'name', 'price', 'image', 'sku', 'extras', '_bg', '_emoji'])
 
 /**
  * ProductModal — bottom sheet con detalle del producto.
@@ -63,12 +63,12 @@ export class ProductModal {
     this._el.querySelector('#pm-sku').textContent   = product.sku
       ? `SKU: ${product.sku}` : ''
 
-    const extraFields = Object.entries(product)
-      .filter(([key, val]) => !HIDDEN_FIELDS.has(key) && val !== null && val !== undefined && val !== '')
+    const extras = product.extras && typeof product.extras === 'object' ? product.extras : {}
+    const extraFields = Object.entries(extras).filter(([, val]) => val !== null && val !== undefined && val !== '')
     this._el.querySelector('#pm-fields').innerHTML = extraFields
       .map(([key, val]) => `
         <div class="modal__field">
-          <span class="modal__field-label">${key}</span>
+          <span class="modal__field-label">${key.charAt(0).toUpperCase() + key.slice(1)}</span>
           <span>${val}</span>
         </div>`)
       .join('')

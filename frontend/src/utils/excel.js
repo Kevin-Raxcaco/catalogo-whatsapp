@@ -40,6 +40,8 @@ export function getColumns(rows) {
  * @returns {object[]}
  */
 export function applyMapping(rows, config) {
+  const fixedCols = new Set([config.name, config.image, config.price, config.sku].filter(Boolean))
+
   return rows.map((row) => {
     const mapped = {
       name:  row[config.name]  ?? '',
@@ -47,9 +49,15 @@ export function applyMapping(rows, config) {
       price: row[config.price] ?? '',
       sku:   row[config.sku]   ?? '',
     }
-    for (const { key, col } of config.extra ?? []) {
-      mapped[key] = row[col] ?? ''
+
+    const extras = {}
+    for (const [col, val] of Object.entries(row)) {
+      if (!fixedCols.has(col) && val !== null && val !== undefined && val !== '') {
+        extras[col] = String(val)
+      }
     }
+    if (Object.keys(extras).length) mapped.extras = extras
+
     return mapped
   })
 }
