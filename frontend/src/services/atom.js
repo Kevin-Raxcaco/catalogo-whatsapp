@@ -1,19 +1,19 @@
-// Atom webhook integration
-const WEBHOOK_URL   = import.meta.env.VITE_ATOM_WEBHOOK_URL
-const WEBHOOK_TOKEN = import.meta.env.VITE_ATOM_WEBHOOK_TOKEN
+// Atom clients integration
+const CLIENTS_URL   = import.meta.env.VITE_ATOM_CLIENTS_URL
+const CLIENTS_TOKEN = import.meta.env.VITE_ATOM_WEBHOOK_TOKEN
 
 /**
- * Fires the Atom webhook when the customer finalizes their cart.
+ * Updates the Atom client record when the customer finalizes their cart.
  * @param {string} name    - Customer first name
  * @param {string} phone   - Customer phone with country code (digits only)
  * @param {Array}  items   - Cart items [{ product, qty }]
  */
 export async function notifyCartSelected(name, phone, items) {
-  if (!WEBHOOK_URL) return
+  if (!CLIENTS_URL) return
 
   const PB_INTERNALS = new Set(['id', 'collectionId', 'collectionName', 'created', 'updated'])
 
-  const productoInteres = items
+  const carritoDeCompra = items
     .map(({ product, qty }) => {
       const campos = Object.entries(product)
         .filter(([key, val]) => !PB_INTERNALS.has(key) && val !== null && val !== undefined && val !== '')
@@ -24,21 +24,24 @@ export async function notifyCartSelected(name, phone, items) {
     .join(' / ')
 
   try {
-    await fetch(WEBHOOK_URL, {
-      method: 'POST',
+    await fetch(CLIENTS_URL, {
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${WEBHOOK_TOKEN}`,
+        Authorization: `Bearer ${CLIENTS_TOKEN}`,
       },
       body: JSON.stringify({
-        custom_carrito_de_compra: productoInteres,
-        first_name: name,
+        firstName: name,
+        lastName: null,
         phone: phone,
+        optionals: {
+          custom_carrito_de_compra: carritoDeCompra,
+        },
       }),
     })
   } catch (err) {
-    // Don't block the WhatsApp redirect if the webhook fails
-    console.warn('Atom webhook error:', err)
+    // Don't block the WhatsApp redirect if the client update fails
+    console.warn('Atom client update error:', err)
   }
 }
 
