@@ -5,7 +5,7 @@ export async function getCatalogs() {
   const counts = await Promise.all(
     catalogs.map(c =>
       pb.collection('products')
-        .getList(1, 1, { filter: `catalog="${c.id}"` })
+        .getList(1, 1, { filter: `catalog="${c.id}"`, skipTotal: false })
         .then(r => r.totalItems)
         .catch(() => 0)
     )
