@@ -1,15 +1,9 @@
-/**
- * Extracts the customer identifier from the URL query string.
- * The link Atom sends via WhatsApp looks like:
- *   https://catalog.app/tienda?uid=5521999887766
- *
- * The exact param name (?uid, ?phone, ?contact) is TBD — change PARAM_NAME below
- * once confirmed with Mateo.
- */
-const PARAM_NAME = 'uid'
-
-export function getCustomerUid() {
-  return new URLSearchParams(window.location.search).get(PARAM_NAME) ?? null
+export function getCustomerFromUrl() {
+  const params = new URLSearchParams(window.location.search)
+  return {
+    name:  params.get('name')  ?? null,
+    phone: params.get('phone') ?? null,
+  }
 }
 
 export function getCatalogSlug() {

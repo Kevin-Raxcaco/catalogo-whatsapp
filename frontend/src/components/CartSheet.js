@@ -1,9 +1,11 @@
 import { getCart, getCount, increment, decrement, removeItem, subscribe, clear } from '../services/cart.js'
 import { notifyCartSelected } from '../services/atom.js'
+import { getCustomerFromUrl } from '../utils/url.js'
 
 export class CartSheet {
   constructor(catalog) {
     this._catalog = catalog
+    this._urlContact = getCustomerFromUrl()
     this._el = this._build()
     document.body.appendChild(this._el)
     this._el.addEventListener('click', (e) => {
@@ -131,8 +133,14 @@ export class CartSheet {
   }
 
   _validate() {
-    const name  = this._el.querySelector('#cs-name').value.trim()
-    const phone = this._el.querySelector('#cs-phone').value.trim().replace(/\s+/g, '')
+    const { name: urlName, phone: urlPhone } = this._urlContact
+
+    if (urlName && urlPhone) {
+      return { name: urlName, phone: urlPhone.replace(/^\+/, '') }
+    }
+
+    const name  = this._el.querySelector('#cs-name')?.value.trim() ?? ''
+    const phone = this._el.querySelector('#cs-phone')?.value.trim().replace(/\s+/g, '') ?? ''
 
     if (!name) {
       this._showError('Por favor ingresa tu nombre.')
@@ -144,7 +152,6 @@ export class CartSheet {
       this._el.querySelector('#cs-phone').focus()
       return null
     }
-    // Strip leading + if present (wa.me expects digits only)
     return { name, phone: phone.replace(/^\+/, '') }
   }
 
@@ -241,6 +248,15 @@ export class CartSheet {
   open() {
     this._resetFooter()
     this._renderItems()
+
+    const { name, phone } = this._urlContact
+    if (name && phone) {
+      const form = this._el.querySelector('.cart-sheet__contact-form')
+      const title = this._el.querySelector('.cart-sheet__contact-title')
+      if (form)  form.hidden  = true
+      if (title) title.hidden = true
+    }
+
     this._el.classList.add('modal-overlay--open')
     document.body.style.overflow = 'hidden'
   }
