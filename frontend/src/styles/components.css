@@ -553,12 +553,12 @@
   .qty-count { font-size: 13px; }
 
   /* Modal centrado en móvil — ocupa casi toda la pantalla */
-  .modal-overlay { padding: 12px 10px; align-items: flex-end; }
+  .modal-overlay { padding: 12px 10px; align-items: center; }
   .modal {
-    border-radius: 20px 20px 0 0;
+    border-radius: 20px;
     max-height: 92vh;
   }
-  .cart-sheet { border-radius: 20px 20px 0 0; }
+  .cart-sheet { border-radius: 20px; }
   .modal__image { height: 180px; font-size: 56px; margin: 12px 14px; }
   .modal__body  { padding: 0 18px 28px; }
   .modal__name  { font-size: 18px; }
