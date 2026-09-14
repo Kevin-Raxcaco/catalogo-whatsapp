@@ -32,7 +32,7 @@ export async function notifyCartSelected(name, phone, items) {
       },
       body: JSON.stringify({
         firstName: name,
-        lastName: "null",
+        lastName: " ",
         phone: phone,
         optionals: {
           custom_carrito_de_compra: carritoDeCompra,
