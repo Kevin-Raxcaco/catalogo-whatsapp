@@ -542,7 +542,7 @@
 
   /* Product card en 2 columnas */
   .product-card__image { height: 130px; font-size: 38px; }
-  .product-card__body  { padding: 10px 12px 12px; }
+  .product-card__body  { padding: 10px 14px 14px; }
   .product-card__name  { font-size: 12.5px; }
   .product-card__price { font-size: 15px; margin-bottom: 8px; }
   .product-card__add-btn {
