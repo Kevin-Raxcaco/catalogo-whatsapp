@@ -1,15 +1,16 @@
 import pb from './pb.js'
 
 export async function getCatalogs() {
-  const [catalogs, products] = await Promise.all([
-    pb.collection('catalogs').getFullList(),
-    pb.collection('products').getFullList({ fields: 'catalog' }),
-  ])
-  const countMap = {}
-  for (const p of products) {
-    countMap[p.catalog] = (countMap[p.catalog] ?? 0) + 1
-  }
-  return catalogs.map(c => ({ ...c, product_count: countMap[c.id] ?? 0 }))
+  const catalogs = await pb.collection('catalogs').getFullList()
+  const counts = await Promise.all(
+    catalogs.map(c =>
+      pb.collection('products')
+        .getList(1, 1, { filter: `catalog="${c.id}"` })
+        .then(r => r.totalItems)
+        .catch(() => 0)
+    )
+  )
+  return catalogs.map((c, i) => ({ ...c, product_count: counts[i] }))
 }
 
 export async function getCatalogBySlug(slug) {
