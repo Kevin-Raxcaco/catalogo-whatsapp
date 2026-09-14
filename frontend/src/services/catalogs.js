@@ -13,6 +13,10 @@ export async function getCatalogs() {
   return catalogs.map((c, i) => ({ ...c, product_count: counts[i] }))
 }
 
+export async function getCatalogById(id) {
+  return await pb.collection('catalogs').getOne(id)
+}
+
 export async function getCatalogBySlug(slug) {
   return await pb.collection('catalogs').getFirstListItem(`slug="${slug}"`)
 }

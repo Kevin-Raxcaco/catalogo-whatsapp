@@ -1,4 +1,4 @@
-import { getCatalogs, getCatalogBySlug, updateCatalog, deleteCatalog } from '../../services/catalogs.js'
+import { getCatalogById, updateCatalog, deleteCatalog } from '../../services/catalogs.js'
 import { getProducts, upsertProducts } from '../../services/products.js'
 import { requireAuth } from '../../services/auth.js'
 import { ColumnMapper } from '../../components/ColumnMapper.js'
@@ -17,11 +17,11 @@ export async function CatalogDetailPage(container) {
 
   let catalog, products
   try {
-    const [cats, prods] = await Promise.all([
-      getCatalogs(),
+    const [cat, prods] = await Promise.all([
+      getCatalogById(catalogId),
       getProducts(catalogId),
     ])
-    catalog  = cats.find(c => c.id === catalogId)
+    catalog  = cat
     products = prods
     if (!catalog) throw new Error('not found')
   } catch {
