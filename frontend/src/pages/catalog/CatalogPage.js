@@ -1,4 +1,4 @@
-import { getCatalogBySlug } from '../../services/catalogs.js'
+import { getCatalogBySlug, incrementViews } from '../../services/catalogs.js'
 import { getProducts }       from '../../services/products.js'
 import { ProductCard }       from '../../components/ProductCard.js'
 import { ProductModal }      from '../../components/ProductModal.js'
@@ -46,4 +46,6 @@ export async function CatalogPage(container) {
 
   const sheet  = new CartSheet(catalog)
   const cartBar = new CartBar(() => sheet.open())
+
+  incrementViews(catalog.id)
 }

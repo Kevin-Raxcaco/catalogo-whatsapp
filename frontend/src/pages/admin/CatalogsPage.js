@@ -46,8 +46,8 @@ export async function CatalogsPage(container) {
           <div class="catalog-card__stat-value">${cat.product_count ?? 0}</div>
         </div>
         <div>
-          <div class="catalog-card__stat-label">Vistas hoy</div>
-          <div class="catalog-card__stat-value">${cat.views_today ?? '—'}</div>
+          <div class="catalog-card__stat-label">Vistas</div>
+          <div class="catalog-card__stat-value">${cat.views ?? '—'}</div>
         </div>
         <div>
           <div class="catalog-card__stat-label">Continuaciones WA</div>
@@ -56,7 +56,7 @@ export async function CatalogsPage(container) {
         <div>
           <div class="catalog-card__stat-label">Actualizado</div>
           <div class="catalog-card__stat-value" style="font-size:13px;">
-            ${new Date(cat.updated).toLocaleDateString('es', { day: 'numeric', month: 'short' })}
+            ${(() => { const d = new Date((cat.updated ?? '').replace(' ', 'T')); return isNaN(d) ? '—' : d.toLocaleDateString('es', { day: 'numeric', month: 'short' }) })()}
           </div>
         </div>
       </div>

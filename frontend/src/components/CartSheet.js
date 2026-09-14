@@ -1,6 +1,7 @@
 import { getCart, getCount, increment, decrement, removeItem, subscribe, clear } from '../services/cart.js'
 import { notifyCartSelected } from '../services/atom.js'
 import { getCustomerFromUrl } from '../utils/url.js'
+import { incrementWaClicks } from '../services/catalogs.js'
 
 export class CartSheet {
   constructor(catalog) {
@@ -178,6 +179,7 @@ export class CartSheet {
 
     try {
       await notifyCartSelected(contact.name, contact.phone, items)
+      incrementWaClicks(this._catalog.id)
       this._showSuccess()
     } catch {
       this._showError('Ocurrió un error. Por favor intenta de nuevo.')
