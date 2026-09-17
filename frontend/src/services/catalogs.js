@@ -2,15 +2,15 @@ import pb from './pb.js'
 
 export async function getCatalogs() {
   const catalogs = await pb.collection('catalogs').getFullList()
-  const counts = await Promise.all(
-    catalogs.map(c =>
-      pb.collection('products')
-        .getList(1, 1, { filter: `catalog="${c.id}"`, skipTotal: false })
-        .then(r => r.totalItems)
-        .catch(() => 0)
-    )
-  )
-  return catalogs.map((c, i) => ({ ...c, product_count: counts[i] }))
+  const result = []
+  for (const c of catalogs) {
+    const count = await pb.collection('products')
+      .getList(1, 1, { filter: `catalog="${c.id}"`, skipTotal: false })
+      .then(r => r.totalItems)
+      .catch(() => 0)
+    result.push({ ...c, product_count: count })
+  }
+  return result
 }
 
 export async function getCatalogById(id) {
