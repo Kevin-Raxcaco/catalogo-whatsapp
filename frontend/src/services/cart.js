@@ -3,7 +3,7 @@ const _items     = new Map()   // productId → { product, qty }
 const _observers = new Set()
 
 const STORAGE_KEY   = 'catalog_cart_v1'
-const ABANDONED_MS  = 30 * 60 * 1000   // 30 minutos
+const ABANDONED_MS  = 5 * 60 * 1000   // 5 minutos
 let   _catalogId    = null
 
 // ── Internal helpers ─────────────────────────────────────────────────
