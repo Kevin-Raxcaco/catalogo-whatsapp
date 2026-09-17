@@ -130,7 +130,10 @@ export class CartSheet {
     }, 0)
 
     if (totalEl) totalEl.textContent = total > 0
-      ? new Intl.NumberFormat('es-GT', { style: 'currency', currency: 'GTQ' }).format(total)
+      ? new Intl.NumberFormat(navigator.language, {
+          style: 'currency',
+          currency: this._catalog.field_config?.currency ?? 'COP',
+        }).format(total)
       : '—'
   }
 

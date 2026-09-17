@@ -1,4 +1,22 @@
 import { getCatalogById, updateCatalog, deleteCatalog } from '../../services/catalogs.js'
+
+const CURRENCY_OPTIONS = `
+  <option value="COP">COP — Peso colombiano</option>
+  <option value="USD">USD — Dólar americano</option>
+  <option value="MXN">MXN — Peso mexicano</option>
+  <option value="GTQ">GTQ — Quetzal guatemalteco</option>
+  <option value="PEN">PEN — Sol peruano</option>
+  <option value="CRC">CRC — Colón costarricense</option>
+  <option value="HNL">HNL — Lempira hondureño</option>
+  <option value="NIO">NIO — Córdoba nicaragüense</option>
+  <option value="DOP">DOP — Peso dominicano</option>
+  <option value="ARS">ARS — Peso argentino</option>
+  <option value="CLP">CLP — Peso chileno</option>
+  <option value="BRL">BRL — Real brasileño</option>
+  <option value="BOB">BOB — Boliviano</option>
+  <option value="PYG">PYG — Guaraní paraguayo</option>
+  <option value="UYU">UYU — Peso uruguayo</option>
+`
 import { getProducts, upsertProducts } from '../../services/products.js'
 import { requireAuth } from '../../services/auth.js'
 import { ColumnMapper } from '../../components/ColumnMapper.js'
@@ -60,11 +78,17 @@ function renderNewCatalogForm(container) {
           <input id="nc-desc" class="field" placeholder="Breve descripción para el cliente"
             style="width:100%;box-sizing:border-box;">
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
           <div>
             <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Emoji</label>
             <input id="nc-emoji" class="field" placeholder="🛍️" maxlength="4"
               style="width:100%;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Moneda</label>
+            <select id="nc-currency" class="field" style="width:100%;box-sizing:border-box;">
+              ${CURRENCY_OPTIONS}
+            </select>
           </div>
           <div>
             <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Estado</label>
@@ -112,7 +136,7 @@ function renderNewCatalogForm(container) {
         description: container.querySelector('#nc-desc').value.trim(),
         emoji:       container.querySelector('#nc-emoji').value.trim() || '🛍️',
         status:      container.querySelector('#nc-status').value,
-        field_config: {},
+        field_config: { currency: container.querySelector('#nc-currency').value },
       })
       window.location.href = `/admin/catalogs/${cat.id}`
     } catch (err) {
@@ -353,11 +377,20 @@ function renderSettingsTab(el, catalog) {
           <input id="s-desc" class="field" value="${escHtml(catalog.description ?? '')}"
             style="width:100%;box-sizing:border-box;">
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
           <div>
             <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Emoji</label>
             <input id="s-emoji" class="field" value="${escHtml(catalog.emoji ?? '')}" maxlength="4"
               style="width:100%;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Moneda</label>
+            <select id="s-currency" class="field" style="width:100%;box-sizing:border-box;">
+              ${CURRENCY_OPTIONS.replace(
+                  `value="${escHtml(catalog.field_config?.currency ?? 'COP')}"`,
+                  `value="${escHtml(catalog.field_config?.currency ?? 'COP')}" selected`
+                )}
+            </select>
           </div>
           <div>
             <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Estado</label>
@@ -393,7 +426,9 @@ function renderSettingsTab(el, catalog) {
         description: el.querySelector('#s-desc').value.trim(),
         emoji:       el.querySelector('#s-emoji').value.trim(),
         status:      el.querySelector('#s-status').value,
+        field_config: { ...catalog.field_config, currency: el.querySelector('#s-currency').value },
       })
+      catalog.field_config = { ...catalog.field_config, currency: el.querySelector('#s-currency').value }
       msg.style.cssText += ';background:rgba(6,223,115,0.1);color:#0c7c47;display:block;'
       msg.textContent = '✓ Cambios guardados'
     } catch {
