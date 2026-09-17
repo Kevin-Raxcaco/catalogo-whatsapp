@@ -1,6 +1,12 @@
 import { addItem, decrement, getQty, subscribe } from '../services/cart.js'
 
-export function ProductCard(product, onDetail) {
+function formatPrice(raw, currency) {
+  const n = parseFloat(String(raw ?? '').replace(/[^0-9.]/g, ''))
+  if (isNaN(n) || !currency) return raw ?? ''
+  return new Intl.NumberFormat(navigator.language, { style: 'currency', currency }).format(n)
+}
+
+export function ProductCard(product, onDetail, currency) {
   const card = document.createElement('div')
   card.className = 'product-card'
 
@@ -15,7 +21,7 @@ export function ProductCard(product, onDetail) {
     <div class="product-card__body">
       <div class="product-card__name">${product.name}</div>
       <div class="product-card__price">
-        ${product.price ?? ''}${product.price ? '<span class="product-card__note"> c/IVA</span>' : ''}
+        ${product.price ? formatPrice(product.price, currency) : ''}${product.price ? '<span class="product-card__note"> c/IVA</span>' : ''}
       </div>
       <div class="product-card__footer">
         <div class="product-card__qty-ctrl">

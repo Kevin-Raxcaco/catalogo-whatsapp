@@ -59,13 +59,14 @@ export async function CatalogPage(container) {
     <div class="grid auto-fill-220 gap-16" id="products-grid" style="padding-bottom:100px;"></div>
   `
 
-  const modal   = new ProductModal()
-  const grid    = container.querySelector('#products-grid')
+  const currency = catalog.field_config?.currency ?? null
+  const modal    = new ProductModal(currency)
+  const grid     = container.querySelector('#products-grid')
 
   function renderGrid(cat) {
     const filtered = cat === 'all' ? productList : productList.filter(p => p.category === cat)
     grid.innerHTML = ''
-    filtered.forEach(p => grid.appendChild(ProductCard(p, (product) => modal.open(product))))
+    filtered.forEach(p => grid.appendChild(ProductCard(p, (product) => modal.open(product), currency)))
   }
 
   renderGrid('all')

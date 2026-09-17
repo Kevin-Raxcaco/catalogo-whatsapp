@@ -1,5 +1,11 @@
 import { addItem } from '../services/cart.js'
 
+function formatPrice(raw, currency) {
+  const n = parseFloat(String(raw ?? '').replace(/[^0-9.]/g, ''))
+  if (isNaN(n) || !currency) return raw ?? ''
+  return new Intl.NumberFormat(navigator.language, { style: 'currency', currency }).format(n)
+}
+
 const HIDDEN_FIELDS = new Set([
   'id','collectionId','collectionName','created','updated',
   'catalog','order','name','price','image','sku','description','category',
@@ -7,7 +13,8 @@ const HIDDEN_FIELDS = new Set([
 ])
 
 export class ProductModal {
-  constructor() {
+  constructor(currency) {
+    this._currency = currency
     this._el = this._build()
     document.body.appendChild(this._el)
     this._el.addEventListener('click', (e) => { if (e.target === this._el) this.close() })
@@ -65,7 +72,7 @@ export class ProductModal {
     // Nombre, precio, descripción, SKU
     this._el.querySelector('#pm-name').textContent  = product.name
     this._el.querySelector('#pm-price').textContent = product.price
-      ? `${product.price} c/IVA` : ''
+      ? `${formatPrice(product.price, this._currency)} c/IVA` : ''
 
     const descEl = this._el.querySelector('#pm-desc')
     descEl.textContent = product.description ?? ''
