@@ -21,8 +21,13 @@ export async function upsertProducts(catalogId, rows) {
   await Promise.all(existing.map(p => pb.collection('products').delete(p.id, { requestKey: null })))
 
   return await Promise.all(
-    rows.map((row, i) =>
-      pb.collection('products').create({ ...row, catalog: catalogId, order: i }, { requestKey: null })
-    )
+    rows.map((row, i) => {
+      const data = { catalog: catalogId, order: i }
+      for (const [k, v] of Object.entries(row)) {
+        // Omit empty strings for URL-type fields to avoid validation errors
+        if (v !== '') data[k] = v
+      }
+      return pb.collection('products').create(data, { requestKey: null })
+    })
   )
 }
