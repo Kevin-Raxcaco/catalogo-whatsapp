@@ -46,6 +46,45 @@ export async function notifyCartSelected(name, phone, items) {
 }
 
 /**
+ * Notifies Atom when the customer abandons the cart without completing.
+ */
+export async function notifyAbandonedCart(name, phone, items) {
+  if (!CLIENTS_URL) return
+
+  const PB_INTERNALS = new Set(['id', 'collectionId', 'collectionName', 'created', 'updated'])
+
+  const carritoAbandonado = items
+    .map(({ product, qty }) => {
+      const campos = Object.entries(product)
+        .filter(([key, val]) => !PB_INTERNALS.has(key) && val !== null && val !== undefined && val !== '')
+        .map(([, val]) => val)
+        .join(' | ')
+      return `(x${qty}) ${campos}`
+    })
+    .join(' / ')
+
+  try {
+    await fetch(CLIENTS_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${CLIENTS_TOKEN}`,
+      },
+      body: JSON.stringify({
+        firstName: name,
+        lastName: " ",
+        phone: phone,
+        optionals: {
+          custom_carrito_abandonado: carritoAbandonado,
+        },
+      }),
+    })
+  } catch (err) {
+    console.warn('Atom abandoned cart error:', err)
+  }
+}
+
+/**
  * Builds a wa.me URL pre-filled with the full cart summary.
  * @param {string|null} phone     - WhatsApp phone (uid param or catalog wa_phone)
  * @param {Array}       items     - Cart items [{ product, qty }]

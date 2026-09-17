@@ -1,21 +1,17 @@
 import { addItem } from '../services/cart.js'
 
-const HIDDEN_FIELDS = new Set(['id', 'collectionId', 'collectionName', 'created', 'updated', 'catalog', 'order', 'name', 'price', 'image', 'sku', 'extras', '_bg', '_emoji'])
+const HIDDEN_FIELDS = new Set([
+  'id','collectionId','collectionName','created','updated',
+  'catalog','order','name','price','image','sku','description','category',
+  'extras','_bg','_emoji',
+])
 
-/**
- * ProductModal — bottom sheet con detalle del producto.
- * Singleton: se monta una vez en el DOM y se rellena al abrir.
- */
 export class ProductModal {
   constructor() {
     this._el = this._build()
     document.body.appendChild(this._el)
-    this._el.addEventListener('click', (e) => {
-      if (e.target === this._el) this.close()
-    })
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') this.close()
-    })
+    this._el.addEventListener('click', (e) => { if (e.target === this._el) this.close() })
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.close() })
   }
 
   _build() {
@@ -27,10 +23,12 @@ export class ProductModal {
         <button class="modal__close" id="pm-close" aria-label="Cerrar">✕</button>
         <div class="modal__image" id="pm-img"></div>
         <div class="modal__body">
+          <div class="modal__meta" id="pm-meta"></div>
           <div class="modal__name"  id="pm-name"></div>
           <div class="modal__price" id="pm-price"></div>
+          <div class="modal__desc"  id="pm-desc"></div>
           <div class="modal__sku"   id="pm-sku"></div>
-          <div class="modal__fields" id="pm-fields"></div>
+          <div class="modal__attrs" id="pm-attrs"></div>
           <div class="modal__divider"></div>
           <button class="btn btn--primary" id="pm-cta">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -48,6 +46,7 @@ export class ProductModal {
   open(product) {
     this._product = product
 
+    // Imagen
     const imgEl = this._el.querySelector('#pm-img')
     if (product.image) {
       imgEl.innerHTML = `<img src="${product.image}" alt="${product.name}" style="width:100%;height:100%;object-fit:cover;">`
@@ -57,21 +56,50 @@ export class ProductModal {
       imgEl.style.background = product._bg ?? '#F5F3FF'
     }
 
+    // Categoría badge
+    const metaEl = this._el.querySelector('#pm-meta')
+    metaEl.innerHTML = product.category
+      ? `<span class="modal__category-badge">${product.category}</span>`
+      : ''
+
+    // Nombre, precio, descripción, SKU
     this._el.querySelector('#pm-name').textContent  = product.name
     this._el.querySelector('#pm-price').textContent = product.price
       ? `${product.price} c/IVA` : ''
-    this._el.querySelector('#pm-sku').textContent   = product.sku
+
+    const descEl = this._el.querySelector('#pm-desc')
+    descEl.textContent = product.description ?? ''
+    descEl.hidden = !product.description
+
+    this._el.querySelector('#pm-sku').textContent = product.sku
       ? `SKU: ${product.sku}` : ''
 
+    // Extras — campos adicionales del producto en grid
     const extras = product.extras && typeof product.extras === 'object' ? product.extras : {}
-    const extraFields = Object.entries(extras).filter(([, val]) => val !== null && val !== undefined && val !== '')
-    this._el.querySelector('#pm-fields').innerHTML = extraFields
-      .map(([key, val]) => `
-        <div class="modal__field">
-          <span class="modal__field-label">${key.charAt(0).toUpperCase() + key.slice(1)}</span>
-          <span>${val}</span>
-        </div>`)
-      .join('')
+
+    // También mostrar campos del nivel raíz que no estén ocultos (por si extras está vacío)
+    const rootFields = Object.entries(product)
+      .filter(([key, val]) => !HIDDEN_FIELDS.has(key) && val !== null && val !== undefined && val !== '')
+
+    const allAttrs = [
+      ...Object.entries(extras).filter(([, val]) => val !== null && val !== undefined && val !== ''),
+      ...rootFields,
+    ]
+
+    const attrsEl = this._el.querySelector('#pm-attrs')
+    if (allAttrs.length) {
+      attrsEl.innerHTML = `
+        <div class="modal__attrs-grid">
+          ${allAttrs.map(([key, val]) => `
+            <div class="modal__attr">
+              <span class="modal__attr-label">${key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g,' ')}</span>
+              <span class="modal__attr-value">${val}</span>
+            </div>`).join('')}
+        </div>`
+      attrsEl.hidden = false
+    } else {
+      attrsEl.hidden = true
+    }
 
     this._el.querySelector('#pm-cta').onclick = () => {
       addItem(product)

@@ -1,8 +1,10 @@
 const FIELDS = [
-  { key: 'name',  label: 'Nombre del producto', required: true },
-  { key: 'image', label: 'Imagen (URL)',         required: false },
-  { key: 'price', label: 'Precio',               required: false },
-  { key: 'sku',   label: 'SKU / Código',         required: false },
+  { key: 'name',        label: 'Nombre del producto', required: true  },
+  { key: 'description', label: 'Descripción',          required: false },
+  { key: 'category',    label: 'Categoría',            required: false },
+  { key: 'price',       label: 'Precio',               required: false },
+  { key: 'sku',         label: 'SKU / Código',         required: false },
+  { key: 'image',       label: 'Imagen (URL)',          required: false },
 ]
 
 export class ColumnMapper {

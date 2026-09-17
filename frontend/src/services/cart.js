@@ -1,11 +1,36 @@
 // Cart state — singleton, reactive via subscribe()
-const _items = new Map() // productId → { product, qty }
+const _items     = new Map()   // productId → { product, qty }
 const _observers = new Set()
+
+const STORAGE_KEY   = 'catalog_cart_v1'
+const ABANDONED_MS  = 30 * 60 * 1000   // 30 minutos
+let   _catalogId    = null
+
+// ── Internal helpers ─────────────────────────────────────────────────
 
 function notify() {
   const snapshot = getCart()
   _observers.forEach(fn => fn(snapshot))
+  _persist()
 }
+
+function _persist() {
+  if (!_catalogId) return
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      catalogId: _catalogId,
+      items: [..._items.entries()].map(([, v]) => v),
+      ts: Date.now(),
+      abandonedNotified: _getStored()?.abandonedNotified ?? false,
+    }))
+  } catch {}
+}
+
+function _getStored() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') } catch { return null }
+}
+
+// ── Public API ───────────────────────────────────────────────────────
 
 export function subscribe(fn) {
   _observers.add(fn)
@@ -54,4 +79,42 @@ export function removeItem(productId) {
 export function clear() {
   _items.clear()
   notify()
+}
+
+// ── Persistence ──────────────────────────────────────────────────────
+
+/** Inicializa el carrito con el catálogo actual y restaura sesión anterior si existe */
+export function initCart(catalogId) {
+  _catalogId = catalogId
+  try {
+    const data = _getStored()
+    if (!data || data.catalogId !== catalogId) return
+    const age = Date.now() - data.ts
+    if (age > ABANDONED_MS * 2) { clearStorage(); return }
+    data.items.forEach(({ product, qty }) => {
+      _items.set(product.id, { product, qty })
+    })
+    notify()
+  } catch {}
+}
+
+export function clearStorage() {
+  try { localStorage.removeItem(STORAGE_KEY) } catch {}
+}
+
+/** Devuelve true si el carrito lleva más de ABANDONED_MS sin actividad y aún no se notificó */
+export function isAbandoned() {
+  const data = _getStored()
+  if (!data || !data.items?.length || data.abandonedNotified) return false
+  return Date.now() - data.ts >= ABANDONED_MS
+}
+
+/** Marca el carrito como ya notificado (evita doble envío) */
+export function markAbandonedNotified() {
+  try {
+    const data = _getStored()
+    if (!data) return
+    data.abandonedNotified = true
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+  } catch {}
 }

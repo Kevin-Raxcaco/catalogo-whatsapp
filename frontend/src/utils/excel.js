@@ -40,14 +40,19 @@ export function getColumns(rows) {
  * @returns {object[]}
  */
 export function applyMapping(rows, config) {
-  const fixedCols = new Set([config.name, config.image, config.price, config.sku].filter(Boolean))
+  const fixedCols = new Set(
+    [config.name, config.image, config.price, config.sku, config.description, config.category]
+      .filter(Boolean)
+  )
 
   return rows.map((row) => {
     const mapped = {
-      name:  row[config.name]  ?? '',
-      image: row[config.image] ?? '',
-      price: row[config.price] ?? '',
-      sku:   row[config.sku]   ?? '',
+      name:        row[config.name]        ?? '',
+      image:       row[config.image]       ?? '',
+      price:       row[config.price]       ?? '',
+      sku:         row[config.sku]         ?? '',
+      description: row[config.description] ?? '',
+      category:    row[config.category]    ?? '',
     }
 
     const extras = {}

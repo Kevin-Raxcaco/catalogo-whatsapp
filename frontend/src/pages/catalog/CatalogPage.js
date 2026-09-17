@@ -4,7 +4,9 @@ import { ProductCard }       from '../../components/ProductCard.js'
 import { ProductModal }      from '../../components/ProductModal.js'
 import { CartBar }           from '../../components/CartBar.js'
 import { CartSheet }         from '../../components/CartSheet.js'
-import { getCatalogSlug }    from '../../utils/url.js'
+import { getCatalogSlug, getCustomerFromUrl } from '../../utils/url.js'
+import { initCart, getCart, isAbandoned, markAbandonedNotified, clearStorage } from '../../services/cart.js'
+import { notifyAbandonedCart } from '../../services/atom.js'
 
 export async function CatalogPage(container) {
   const slug = getCatalogSlug()
@@ -19,6 +21,16 @@ export async function CatalogPage(container) {
     container.innerHTML = '<p style="padding:32px;text-align:center;color:#64748B;">Catálogo no encontrado.</p>'
     return
   }
+
+  // Restaurar carrito de sesión anterior
+  initCart(catalog.id)
+
+  // Categorías únicas
+  const categories = [...new Set(
+    productList.map(p => p.category).filter(Boolean)
+  )]
+  const hasCategories = categories.length > 0
+  let activeCategory  = 'all'
 
   container.innerHTML = `
     <div class="catalog-hero">
@@ -37,15 +49,56 @@ export async function CatalogPage(container) {
         <div style="font-size:13px;color:var(--color-text-muted);">${productList.length} productos</div>
       </div>
     </div>
+
+    ${hasCategories ? `
+    <div class="category-tabs" id="category-tabs">
+      <button class="category-tab category-tab--active" data-cat="all">Todos</button>
+      ${categories.map(c => `<button class="category-tab" data-cat="${c}">${c}</button>`).join('')}
+    </div>` : ''}
+
     <div class="grid auto-fill-220 gap-16" id="products-grid" style="padding-bottom:100px;"></div>
   `
 
   const modal   = new ProductModal()
   const grid    = container.querySelector('#products-grid')
-  productList.forEach(p => grid.appendChild(ProductCard(p, (product) => modal.open(product))))
 
-  const sheet  = new CartSheet(catalog)
+  function renderGrid(cat) {
+    const filtered = cat === 'all' ? productList : productList.filter(p => p.category === cat)
+    grid.innerHTML = ''
+    filtered.forEach(p => grid.appendChild(ProductCard(p, (product) => modal.open(product))))
+  }
+
+  renderGrid('all')
+
+  // Category tabs
+  if (hasCategories) {
+    container.querySelector('#category-tabs').addEventListener('click', (e) => {
+      const btn = e.target.closest('.category-tab')
+      if (!btn) return
+      container.querySelectorAll('.category-tab').forEach(b => b.classList.remove('category-tab--active'))
+      btn.classList.add('category-tab--active')
+      activeCategory = btn.dataset.cat
+      renderGrid(activeCategory)
+    })
+  }
+
+  const sheet   = new CartSheet(catalog, () => { clearStorage() })
   const cartBar = new CartBar(() => sheet.open())
 
   incrementViews(catalog.id)
+
+  // Abandoned cart — solo si tenemos datos del cliente por URL
+  const { name, phone } = getCustomerFromUrl()
+  if (name && phone) {
+    const abandonedTimer = setInterval(() => {
+      if (isAbandoned()) {
+        const items = getCart()
+        if (items.length) {
+          notifyAbandonedCart(name, phone.replace(/^\+/, ''), items)
+          markAbandonedNotified()
+        }
+        clearInterval(abandonedTimer)
+      }
+    }, 60_000) // verifica cada minuto
+  }
 }

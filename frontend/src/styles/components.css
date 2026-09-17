@@ -265,7 +265,50 @@
   display: flex; align-items: center; justify-content: center;
 }
 .modal__close:hover { background: rgba(30, 41, 57, 0.14); }
-.modal__sku { font-size: 12px; color: var(--color-text-muted); margin-bottom: 16px; }
+.modal__sku  { font-size: 12px; color: var(--color-text-muted); margin-bottom: 16px; }
+.modal__desc { font-size: 13.5px; color: var(--color-text-muted); line-height: 1.6; margin-bottom: 14px; }
+.modal__meta { margin-bottom: 8px; }
+.modal__category-badge {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 100px;
+  background: var(--color-violet-50); color: var(--color-violet);
+  letter-spacing: .03em; text-transform: uppercase;
+}
+
+/* Atributos en grid */
+.modal__attrs { margin-bottom: 18px; }
+.modal__attrs-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.modal__attr {
+  display: flex; flex-direction: column; gap: 2px;
+  background: rgba(30,41,57,0.03); border-radius: 10px;
+  padding: 9px 12px;
+}
+.modal__attr-label {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--color-text-muted);
+}
+.modal__attr-value { font-size: 13.5px; font-weight: 600; color: var(--color-text); }
+
+/* --- Category tabs ----------------------------------------- */
+.category-tabs {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.category-tab {
+  padding: 6px 16px; border-radius: 100px;
+  font-size: 13px; font-weight: 600;
+  border: 1.5px solid var(--color-border);
+  background: transparent; color: var(--color-text-muted);
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.category-tab:hover { border-color: var(--color-violet); color: var(--color-violet); }
+.category-tab--active {
+  background: var(--grad-main); color: #fff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(128,35,255,0.22);
+}
 .modal__image {
   height: 230px;
   display: flex; align-items: center; justify-content: center;

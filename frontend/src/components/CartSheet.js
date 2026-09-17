@@ -4,8 +4,9 @@ import { getCustomerFromUrl } from '../utils/url.js'
 import { incrementWaClicks } from '../services/catalogs.js'
 
 export class CartSheet {
-  constructor(catalog) {
-    this._catalog = catalog
+  constructor(catalog, onComplete) {
+    this._catalog    = catalog
+    this._onComplete = onComplete ?? (() => {})
     this._urlContact = getCustomerFromUrl()
     this._el = this._build()
     document.body.appendChild(this._el)
@@ -180,6 +181,7 @@ export class CartSheet {
     try {
       await notifyCartSelected(contact.name, contact.phone, items)
       incrementWaClicks(this._catalog.id)
+      this._onComplete()
       this._showSuccess()
     } catch {
       this._showError('Ocurrió un error. Por favor intenta de nuevo.')
