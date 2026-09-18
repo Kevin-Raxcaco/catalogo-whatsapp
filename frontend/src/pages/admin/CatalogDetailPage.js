@@ -3,6 +3,7 @@ import { getProducts, upsertProducts } from '../../services/products.js'
 import { requireAuth } from '../../services/auth.js'
 import { ColumnMapper } from '../../components/ColumnMapper.js'
 import { parseFile, getColumns, applyMapping } from '../../utils/excel.js'
+import { getAtomLogs } from '../../services/atomLogs.js'
 
 const CURRENCY_OPTIONS = `
   <option value="COP">COP — Peso colombiano</option>
@@ -335,11 +336,13 @@ function renderDetail(container, catalog, products) {
       </button>
       <button class="detail-tabs__tab" data-tab="upload">Subir archivo</button>
       <button class="detail-tabs__tab" data-tab="settings">Configuración</button>
+      <button class="detail-tabs__tab" data-tab="logs">Registros</button>
     </div>
 
     <div id="tab-products"></div>
     <div id="tab-upload"   style="display:none;"></div>
     <div id="tab-settings" style="display:none;"></div>
+    <div id="tab-logs"     style="display:none;"></div>
   `
 
   container.querySelector('#btn-back').addEventListener('click', () => {
@@ -375,6 +378,16 @@ function renderDetail(container, catalog, products) {
     container.querySelector('.detail-tabs__tab[data-tab="products"] .badge').textContent = products.length
   })
   renderSettingsTab(container.querySelector('#tab-settings'), catalog)
+
+  // Logs tab — carga cuando el usuario hace clic
+  let logsLoaded = false
+  const logsTab = container.querySelector('.detail-tabs__tab[data-tab="logs"]')
+  logsTab.addEventListener('click', () => {
+    if (!logsLoaded) {
+      logsLoaded = true
+      renderLogsTab(container.querySelector('#tab-logs'), catalog.id)
+    }
+  })
 }
 
 // ─── Tab: Products ───────────────────────────────────────────────────────────
@@ -760,6 +773,100 @@ function renderSettingsTab(el, catalog) {
       msg.textContent = 'Error al eliminar el catálogo.'
     }
   })
+}
+
+// ─── Tab: Logs ───────────────────────────────────────────────────────────────
+
+async function renderLogsTab(el, catalogId) {
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+      <p style="margin:0;font-size:13px;color:var(--color-text-muted);">Últimas 50 peticiones enviadas a Atom</p>
+      <button class="btn btn--ghost btn--sm" id="logs-refresh">↺ Actualizar</button>
+    </div>
+    <div id="logs-content">
+      <p style="font-size:13px;color:var(--color-text-muted);">Cargando…</p>
+    </div>`
+
+  el.querySelector('#logs-refresh').addEventListener('click', () => loadLogs())
+
+  async function loadLogs() {
+    const content = el.querySelector('#logs-content')
+    content.innerHTML = `<p style="font-size:13px;color:var(--color-text-muted);">Cargando…</p>`
+    try {
+      const result = await getAtomLogs(catalogId)
+      const logs   = result.items
+
+      if (!logs.length) {
+        content.innerHTML = `
+          <div style="text-align:center;padding:48px 20px;">
+            <div style="font-size:36px;margin-bottom:12px;">📋</div>
+            <p style="color:var(--color-text-muted);font-size:14px;margin:0;">
+              Sin registros aún. Los logs aparecerán aquí cuando se envíen notificaciones a Atom.
+            </p>
+          </div>`
+        return
+      }
+
+      content.innerHTML = `
+        <div style="overflow-x:auto;border-radius:14px;border:1.5px solid var(--color-border);">
+          <table class="table" style="margin:0;">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Cliente</th>
+                <th>Teléfono</th>
+                <th>Campo Atom</th>
+                <th style="text-align:center;">Productos</th>
+                <th style="text-align:center;">Estado</th>
+                <th>Error</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${logs.map(log => {
+                const date  = new Date(log.created)
+                const dateStr = date.toLocaleDateString('es', { day:'2-digit', month:'short' })
+                  + ' ' + date.toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' })
+                const isSuccess = log.status === 'success'
+                const typeLabel = log.type === 'cart_completed' ? '🛒 Completado' : '⏳ Abandonado'
+                const typeBg    = log.type === 'cart_completed'
+                  ? 'rgba(6,223,115,0.1);color:#0c7c47'
+                  : 'rgba(245,158,11,0.12);color:#b45309'
+                return `
+                  <tr>
+                    <td style="font-size:12px;color:var(--color-text-muted);white-space:nowrap;">${escHtml(dateStr)}</td>
+                    <td>
+                      <span style="font-size:12px;padding:3px 10px;border-radius:20px;
+                        background:${typeBg};white-space:nowrap;">${typeLabel}</span>
+                    </td>
+                    <td style="font-weight:600;">${escHtml(log.customer_name || '—')}</td>
+                    <td style="font-size:13px;color:var(--color-text-muted);font-family:var(--font-mono);">${escHtml(log.customer_phone || '—')}</td>
+                    <td style="font-size:12px;color:var(--color-text-muted);font-family:var(--font-mono);">${escHtml(log.atom_field || '—')}</td>
+                    <td style="text-align:center;font-weight:600;">${log.items_count ?? '—'}</td>
+                    <td style="text-align:center;">
+                      <span style="font-size:12px;padding:3px 10px;border-radius:20px;
+                        background:${isSuccess ? 'rgba(6,223,115,0.1);color:#0c7c47' : 'rgba(255,70,70,0.08);color:#d32f2f'};">
+                        ${isSuccess ? '✓ OK' : '✕ Error'}
+                      </span>
+                    </td>
+                    <td style="font-size:12px;color:#d32f2f;max-width:180px;overflow:hidden;
+                      text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(log.error_msg || '')}">
+                      ${escHtml(log.error_msg || '')}
+                    </td>
+                  </tr>`
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size:12px;color:var(--color-text-muted);margin-top:10px;">
+          Mostrando ${logs.length} de ${result.totalItems} registros
+        </p>`
+    } catch {
+      content.innerHTML = `<p style="color:#d32f2f;font-size:13px;">Error al cargar los registros.</p>`
+    }
+  }
+
+  loadLogs()
 }
 
 function escHtml(str) {

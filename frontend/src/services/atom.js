@@ -1,4 +1,6 @@
 // Atom clients integration
+import { logAtomRequest } from './atomLogs.js'
+
 const CLIENTS_URL = import.meta.env.VITE_ATOM_CLIENTS_URL
 
 /**
@@ -28,23 +30,27 @@ export async function notifyCartSelected(name, phone, items, catalog) {
     })
     .join(' / ')
 
+  const logBase = {
+    catalogId:     catalog?.id,
+    type:          'cart_completed',
+    customerName:  name,
+    customerPhone: phone,
+    atomField:     fieldCart,
+    itemsCount:    items.length,
+  }
+
   try {
     await fetch(CLIENTS_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({
-        firstName: name,
-        lastName: " ",
-        phone: phone,
-        optionals: {
-          [fieldCart]: carritoDeCompra,
-        },
+        firstName: name, lastName: ' ', phone,
+        optionals: { [fieldCart]: carritoDeCompra },
       }),
     })
+    logAtomRequest({ ...logBase, status: 'success' })
   } catch (err) {
+    logAtomRequest({ ...logBase, status: 'error', errorMsg: err?.message ?? String(err) })
     console.warn('Atom client update error:', err)
   }
 }
@@ -73,23 +79,27 @@ export async function notifyAbandonedCart(name, phone, items, catalog) {
     })
     .join(' / ')
 
+  const logBase = {
+    catalogId:     catalog?.id,
+    type:          'cart_abandoned',
+    customerName:  name,
+    customerPhone: phone,
+    atomField:     fieldAbandoned,
+    itemsCount:    items.length,
+  }
+
   try {
     await fetch(CLIENTS_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({
-        firstName: name,
-        lastName: " ",
-        phone: phone,
-        optionals: {
-          [fieldAbandoned]: carritoAbandonado,
-        },
+        firstName: name, lastName: ' ', phone,
+        optionals: { [fieldAbandoned]: carritoAbandonado },
       }),
     })
+    logAtomRequest({ ...logBase, status: 'success' })
   } catch (err) {
+    logAtomRequest({ ...logBase, status: 'error', errorMsg: err?.message ?? String(err) })
     console.warn('Atom abandoned cart error:', err)
   }
 }
