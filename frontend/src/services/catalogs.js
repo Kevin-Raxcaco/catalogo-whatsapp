@@ -22,7 +22,10 @@ export async function getCatalogBySlug(slug) {
 }
 
 export async function createCatalog(data) {
-  return await pb.collection('catalogs').create(data)
+  return await pb.collection('catalogs').create({
+    ...data,
+    owner: pb.authStore.record?.id,
+  })
 }
 
 export async function updateCatalog(id, data) {
