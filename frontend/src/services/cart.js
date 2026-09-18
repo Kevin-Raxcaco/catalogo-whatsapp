@@ -15,14 +15,14 @@ function notify() {
   _persist()
 }
 
-function _persist() {
+function _persist({ resetNotified = false } = {}) {
   if (!_catalogId) return
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       catalogId: _catalogId,
       items: [..._items.entries()].map(([, v]) => v),
       ts: Date.now(),
-      abandonedNotified: _getStored()?.abandonedNotified ?? false,
+      abandonedNotified: resetNotified ? false : (_getStored()?.abandonedNotified ?? false),
     }))
   } catch {}
 }
@@ -79,7 +79,9 @@ export function removeItem(productId) {
 
 export function clear() {
   _items.clear()
-  notify()
+  const snapshot = getCart()
+  _observers.forEach(fn => fn(snapshot))
+  _persist({ resetNotified: true })
 }
 
 // ── Persistence ──────────────────────────────────────────────────────
