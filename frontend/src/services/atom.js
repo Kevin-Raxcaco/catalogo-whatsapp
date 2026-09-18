@@ -1,6 +1,5 @@
 // Atom clients integration
-const CLIENTS_URL   = import.meta.env.VITE_ATOM_CLIENTS_URL
-const CLIENTS_TOKEN = import.meta.env.VITE_ATOM_WEBHOOK_TOKEN
+const CLIENTS_URL = import.meta.env.VITE_ATOM_CLIENTS_URL
 
 /**
  * Updates the Atom client record when the customer finalizes their cart.
@@ -8,15 +7,21 @@ const CLIENTS_TOKEN = import.meta.env.VITE_ATOM_WEBHOOK_TOKEN
  * @param {string} phone   - Customer phone with country code (digits only)
  * @param {Array}  items   - Cart items [{ product, qty }]
  */
-export async function notifyCartSelected(name, phone, items) {
+export async function notifyCartSelected(name, phone, items, catalog) {
   if (!CLIENTS_URL) return
 
-  const PB_INTERNALS = new Set(['id', 'collectionId', 'collectionName', 'created', 'updated'])
+  const token     = catalog?.field_config?.atom_token
+  const fieldCart = catalog?.field_config?.atom_field_cart ?? 'custom_carrito_de_compra'
+  if (!token) return
+
+  const PB_INTERNALS = new Set(['id', 'collectionId', 'collectionName', 'created', 'updated', 'extras',
+    'catalog', 'order', 'category'])
 
   const carritoDeCompra = items
     .map(({ product, qty }) => {
       const campos = Object.entries(product)
-        .filter(([key, val]) => !PB_INTERNALS.has(key) && val !== null && val !== undefined && val !== '')
+        .filter(([key, val]) => !PB_INTERNALS.has(key) && val !== null && val !== undefined && val !== ''
+          && typeof val !== 'object')
         .map(([, val]) => val)
         .join(' | ')
       return `(x${qty}) ${campos}`
@@ -28,19 +33,18 @@ export async function notifyCartSelected(name, phone, items) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${CLIENTS_TOKEN}`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         firstName: name,
         lastName: " ",
         phone: phone,
         optionals: {
-          custom_carrito_de_compra: carritoDeCompra,
+          [fieldCart]: carritoDeCompra,
         },
       }),
     })
   } catch (err) {
-    // Don't block the WhatsApp redirect if the client update fails
     console.warn('Atom client update error:', err)
   }
 }
@@ -48,15 +52,21 @@ export async function notifyCartSelected(name, phone, items) {
 /**
  * Notifies Atom when the customer abandons the cart without completing.
  */
-export async function notifyAbandonedCart(name, phone, items) {
+export async function notifyAbandonedCart(name, phone, items, catalog) {
   if (!CLIENTS_URL) return
 
-  const PB_INTERNALS = new Set(['id', 'collectionId', 'collectionName', 'created', 'updated'])
+  const token          = catalog?.field_config?.atom_token
+  const fieldAbandoned = catalog?.field_config?.atom_field_abandoned ?? 'custom_carrito_abandonado'
+  if (!token) return
+
+  const PB_INTERNALS = new Set(['id', 'collectionId', 'collectionName', 'created', 'updated', 'extras',
+    'catalog', 'order', 'category'])
 
   const carritoAbandonado = items
     .map(({ product, qty }) => {
       const campos = Object.entries(product)
-        .filter(([key, val]) => !PB_INTERNALS.has(key) && val !== null && val !== undefined && val !== '')
+        .filter(([key, val]) => !PB_INTERNALS.has(key) && val !== null && val !== undefined && val !== ''
+          && typeof val !== 'object')
         .map(([, val]) => val)
         .join(' | ')
       return `(x${qty}) ${campos}`
@@ -68,14 +78,14 @@ export async function notifyAbandonedCart(name, phone, items) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${CLIENTS_TOKEN}`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         firstName: name,
         lastName: " ",
         phone: phone,
         optionals: {
-          custom_carrito_abandonado: carritoAbandonado,
+          [fieldAbandoned]: carritoAbandonado,
         },
       }),
     })

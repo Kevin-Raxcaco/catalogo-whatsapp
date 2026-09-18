@@ -400,6 +400,44 @@ function renderSettingsTab(el, catalog) {
             </select>
           </div>
         </div>
+        <hr style="border:none;border-top:1px solid var(--color-border);margin:4px 0;">
+        <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+          color:var(--color-text-muted);margin:0;">Integración Atom</p>
+        <div>
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">
+            Tiempo de carrito abandonado (minutos)
+          </label>
+          <input id="s-timeout" class="field" type="number" min="1"
+            value="${escHtml(String(catalog.field_config?.abandoned_timeout_min ?? 30))}"
+            style="width:100%;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Token de Atom</label>
+          <input id="s-atom-token" class="field" type="password"
+            value="${escHtml(catalog.field_config?.atom_token ?? '')}"
+            placeholder="Bearer token de tu empresa"
+            style="width:100%;box-sizing:border-box;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">
+              Campo carrito completado
+            </label>
+            <input id="s-field-cart" class="field"
+              value="${escHtml(catalog.field_config?.atom_field_cart ?? '')}"
+              placeholder="custom_carrito_de_compra"
+              style="width:100%;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">
+              Campo carrito abandonado
+            </label>
+            <input id="s-field-abandoned" class="field"
+              value="${escHtml(catalog.field_config?.atom_field_abandoned ?? '')}"
+              placeholder="custom_carrito_abandonado"
+              style="width:100%;box-sizing:border-box;">
+          </div>
+        </div>
         <div id="s-msg" style="display:none;padding:10px;border-radius:10px;font-size:13px;"></div>
         <div style="display:flex;gap:10px;justify-content:space-between;">
           <button type="button" class="btn btn--ghost btn--sm" id="btn-delete"
@@ -421,14 +459,26 @@ function renderSettingsTab(el, catalog) {
     btn.textContent = 'Guardando…'
     msg.style.display = 'none'
     try {
+      const timeoutVal  = parseInt(el.querySelector('#s-timeout').value, 10) || 30
+      const atomToken   = el.querySelector('#s-atom-token').value.trim()
+      const fieldCart   = el.querySelector('#s-field-cart').value.trim()
+      const fieldAband  = el.querySelector('#s-field-abandoned').value.trim()
+      const newConfig   = {
+        ...catalog.field_config,
+        currency:              el.querySelector('#s-currency').value,
+        abandoned_timeout_min: timeoutVal,
+        ...(atomToken  ? { atom_token:           atomToken  } : {}),
+        ...(fieldCart  ? { atom_field_cart:       fieldCart  } : {}),
+        ...(fieldAband ? { atom_field_abandoned:  fieldAband } : {}),
+      }
       await updateCatalog(catalog.id, {
         name:        el.querySelector('#s-name').value.trim(),
         description: el.querySelector('#s-desc').value.trim(),
         emoji:       el.querySelector('#s-emoji').value.trim(),
         status:      el.querySelector('#s-status').value,
-        field_config: { ...catalog.field_config, currency: el.querySelector('#s-currency').value },
+        field_config: newConfig,
       })
-      catalog.field_config = { ...catalog.field_config, currency: el.querySelector('#s-currency').value }
+      catalog.field_config = newConfig
       msg.style.cssText += ';background:rgba(6,223,115,0.1);color:#0c7c47;display:block;'
       msg.textContent = '✓ Cambios guardados'
     } catch {

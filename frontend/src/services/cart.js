@@ -2,9 +2,10 @@
 const _items     = new Map()   // productId → { product, qty }
 const _observers = new Set()
 
-const STORAGE_KEY   = 'catalog_cart_v1'
-const ABANDONED_MS  = 5 * 60 * 1000   // 5 minutos
-let   _catalogId    = null
+const STORAGE_KEY        = 'catalog_cart_v1'
+const DEFAULT_ABANDONED_MS = 30 * 60 * 1000  // 30 min por defecto
+let   _catalogId         = null
+let   _abandonedMs       = DEFAULT_ABANDONED_MS
 
 // ── Internal helpers ─────────────────────────────────────────────────
 
@@ -83,14 +84,15 @@ export function clear() {
 
 // ── Persistence ──────────────────────────────────────────────────────
 
-/** Inicializa el carrito con el catálogo actual y restaura sesión anterior si existe */
-export function initCart(catalogId) {
-  _catalogId = catalogId
+/** Inicializa el carrito. abandonedMinutes viene de field_config del catálogo */
+export function initCart(catalogId, abandonedMinutes) {
+  _catalogId   = catalogId
+  _abandonedMs = abandonedMinutes ? abandonedMinutes * 60 * 1000 : DEFAULT_ABANDONED_MS
   try {
     const data = _getStored()
     if (!data || data.catalogId !== catalogId) return
     const age = Date.now() - data.ts
-    if (age > ABANDONED_MS * 2) { clearStorage(); return }
+    if (age > _abandonedMs * 2) { clearStorage(); return }
     data.items.forEach(({ product, qty }) => {
       _items.set(product.id, { product, qty })
     })
@@ -102,11 +104,11 @@ export function clearStorage() {
   try { localStorage.removeItem(STORAGE_KEY) } catch {}
 }
 
-/** Devuelve true si el carrito lleva más de ABANDONED_MS sin actividad y aún no se notificó */
+/** Devuelve true si el carrito lleva más de _abandonedMs sin actividad y aún no se notificó */
 export function isAbandoned() {
   const data = _getStored()
   if (!data || !data.items?.length || data.abandonedNotified) return false
-  return Date.now() - data.ts >= ABANDONED_MS
+  return Date.now() - data.ts >= _abandonedMs
 }
 
 /** Marca el carrito como ya notificado (evita doble envío) */

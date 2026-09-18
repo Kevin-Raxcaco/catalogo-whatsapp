@@ -23,7 +23,7 @@ export async function CatalogPage(container) {
   }
 
   // Restaurar carrito de sesión anterior
-  initCart(catalog.id)
+  initCart(catalog.id, catalog.field_config?.abandoned_timeout_min)
 
   // Categorías únicas
   const categories = [...new Set(
@@ -95,7 +95,7 @@ export async function CatalogPage(container) {
       if (isAbandoned()) {
         const items = getCart()
         if (items.length) {
-          notifyAbandonedCart(name, phone.replace(/^\+/, ''), items)
+          notifyAbandonedCart(name, phone.replace(/^\+/, ''), items, catalog)
           markAbandonedNotified()
         }
         clearInterval(abandonedTimer)

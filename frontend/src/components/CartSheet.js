@@ -182,7 +182,7 @@ export class CartSheet {
     waBtn.textContent = 'Enviando pedido...'
 
     try {
-      await notifyCartSelected(contact.name, contact.phone, items)
+      await notifyCartSelected(contact.name, contact.phone, items, this._catalog)
       incrementWaClicks(this._catalog.id)
       this._onComplete()
       this._showSuccess()
