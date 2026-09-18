@@ -22,6 +22,84 @@ const CURRENCY_OPTIONS = `
   <option value="UYU">UYU — Peso uruguayo</option>
 `
 
+const EMOJI_CATEGORIES = [
+  { label: 'General',      emojis: ['🛍️','🛒','🏷️','💳','💰','🤑','🎁','📦','🎀','🏪','🏬','🔖'] },
+  { label: 'Comida',       emojis: ['🍕','🍔','🌮','🍜','🍣','🥗','🍰','☕','🍷','🥤','🍦','🧁'] },
+  { label: 'Moda',         emojis: ['👗','👠','👜','💄','💍','👒','🧴','👔','👕','🧢','🕶️','👟'] },
+  { label: 'Hogar',        emojis: ['🏠','🛋️','🪑','🛏️','🪞','🏺','🧹','🔑','🪴','🕯️','🖼️','🪟'] },
+  { label: 'Auto',         emojis: ['🚗','🔧','⚙️','🛞','🚙','🏎️','🛻','🔩','🪛','⛽','🚕','🛠️'] },
+  { label: 'Electrónica',  emojis: ['💻','📱','🖥️','⌨️','🎮','📷','📺','🎧','🖨️','💾','📡','🔋'] },
+  { label: 'Salud',        emojis: ['💊','🩺','🧴','💆','🧘','🏋️','🩹','🌿','🧬','🩻','💉','🫀'] },
+  { label: 'Deportes',     emojis: ['⚽','🏀','🎾','🏊','🚴','🥊','🧗','🎯','🏆','🥇','🎽','🏄'] },
+]
+
+// ─── Emoji picker ─────────────────────────────────────────────────────────────
+
+function createEmojiPicker(inputEl) {
+  let activeCat = 0
+  let popover   = null
+
+  function open() {
+    if (popover) { close(); return }
+    popover = document.createElement('div')
+    popover.className = 'emoji-popover'
+    popover.innerHTML = `
+      <div class="emoji-popover__tabs" id="ep-tabs"></div>
+      <div class="emoji-popover__grid" id="ep-grid"></div>
+    `
+
+    const tabs = popover.querySelector('#ep-tabs')
+    const grid = popover.querySelector('#ep-grid')
+
+    function renderCat(idx) {
+      activeCat = idx
+      tabs.querySelectorAll('.emoji-popover__tab').forEach((t, i) => {
+        t.classList.toggle('active', i === idx)
+      })
+      grid.innerHTML = EMOJI_CATEGORIES[idx].emojis.map(e =>
+        `<button class="emoji-popover__btn" data-emoji="${e}">${e}</button>`
+      ).join('')
+      grid.querySelectorAll('[data-emoji]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          inputEl.value = btn.dataset.emoji
+          inputEl.dispatchEvent(new Event('input'))
+          close()
+        })
+      })
+    }
+
+    EMOJI_CATEGORIES.forEach((cat, i) => {
+      const t = document.createElement('button')
+      t.className = 'emoji-popover__tab' + (i === activeCat ? ' active' : '')
+      t.type = 'button'
+      t.textContent = cat.label
+      t.addEventListener('click', () => renderCat(i))
+      tabs.appendChild(t)
+    })
+    renderCat(activeCat)
+
+    inputEl.parentElement.style.position = 'relative'
+    inputEl.parentElement.appendChild(popover)
+
+    setTimeout(() => document.addEventListener('click', outsideClick), 0)
+  }
+
+  function close() {
+    popover?.remove()
+    popover = null
+    document.removeEventListener('click', outsideClick)
+  }
+
+  function outsideClick(e) {
+    if (!popover?.contains(e.target) && e.target !== inputEl) close()
+  }
+
+  inputEl.addEventListener('click', (e) => { e.stopPropagation(); open() })
+  inputEl.readOnly = true
+  inputEl.style.cursor = 'pointer'
+  inputEl.title = 'Haz clic para elegir un emoji'
+}
+
 export async function CatalogDetailPage(container) {
   requireAuth()
 
@@ -65,55 +143,50 @@ function renderNewCatalogForm(container) {
 
       <form id="new-catalog-form" style="display:flex;flex-direction:column;gap:20px;">
 
-        <!-- Sección: Información básica -->
+        <!-- Información básica -->
         <div class="card" style="padding:24px;display:flex;flex-direction:column;gap:16px;">
           <p class="section-label">Información básica</p>
 
           <div>
             <label class="field-label" for="nc-name">Nombre del catálogo *</label>
-            <input id="nc-name" class="field" placeholder="Ej: Calzado temporada 2025" required
-              style="width:100%;box-sizing:border-box;">
+            <input id="nc-name" class="field" placeholder="Ej: Calzado temporada 2025" required>
           </div>
 
           <div>
             <label class="field-label" for="nc-slug">URL del catálogo</label>
-            <div style="display:flex;align-items:center;gap:0;border:1.5px solid var(--color-border);
-              border-radius:10px;overflow:hidden;background:var(--color-bg);">
-              <span style="padding:0 10px;font-size:13px;color:var(--color-text-muted);
+            <div style="display:flex;align-items:center;border:1.5px solid var(--color-border);
+              border-radius:12px;overflow:hidden;background:var(--color-bg);">
+              <span style="padding:10px 12px;font-size:13px;color:var(--color-text-muted);
                 background:var(--color-bg-subtle);border-right:1.5px solid var(--color-border);
-                white-space:nowrap;line-height:38px;">/catalog/</span>
+                white-space:nowrap;">/catalog/</span>
               <input id="nc-slug" placeholder="calzado-temporada"
-                style="flex:1;border:none;outline:none;padding:0 12px;height:38px;font-size:14px;
+                style="flex:1;border:none;outline:none;padding:10px 14px;font-size:14px;
                 background:transparent;color:var(--color-text);">
             </div>
           </div>
 
           <div>
             <label class="field-label" for="nc-desc">Descripción</label>
-            <input id="nc-desc" class="field" placeholder="Breve descripción que verá el cliente"
-              style="width:100%;box-sizing:border-box;">
+            <textarea id="nc-desc" class="field" placeholder="Breve descripción que verá el cliente" rows="2"></textarea>
           </div>
         </div>
 
-        <!-- Sección: Apariencia y estado -->
+        <!-- Apariencia y estado -->
         <div class="card" style="padding:24px;display:flex;flex-direction:column;gap:16px;">
           <p class="section-label">Apariencia y estado</p>
-
-          <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:12px;">
+          <div style="display:grid;grid-template-columns:90px 1fr 1fr;gap:12px;">
             <div>
-              <label class="field-label" for="nc-emoji">Emoji</label>
+              <label class="field-label">Emoji</label>
               <input id="nc-emoji" class="field" placeholder="🛍️" maxlength="4"
-                style="width:100%;box-sizing:border-box;text-align:center;font-size:20px;">
+                style="text-align:center;font-size:22px;padding:8px 4px;">
             </div>
             <div>
               <label class="field-label" for="nc-currency">Moneda</label>
-              <select id="nc-currency" class="field" style="width:100%;box-sizing:border-box;">
-                ${CURRENCY_OPTIONS}
-              </select>
+              <select id="nc-currency" class="field">${CURRENCY_OPTIONS}</select>
             </div>
             <div>
               <label class="field-label" for="nc-status">Estado inicial</label>
-              <select id="nc-status" class="field" style="width:100%;box-sizing:border-box;">
+              <select id="nc-status" class="field">
                 <option value="draft">Borrador</option>
                 <option value="active">Activo</option>
               </select>
@@ -121,7 +194,51 @@ function renderNewCatalogForm(container) {
           </div>
         </div>
 
-        <div id="nc-error" style="display:none;padding:12px 16px;border-radius:10px;
+        <!-- Integración Atom -->
+        <div class="card" style="padding:24px;display:flex;flex-direction:column;gap:16px;">
+          <div>
+            <p class="section-label" style="margin-bottom:2px;">Integración Atom</p>
+            <p style="font-size:13px;color:var(--color-text-muted);margin:0;">
+              Opcional — configura cómo se actualiza el cliente en Atom.
+            </p>
+          </div>
+
+          <div>
+            <label class="field-label" for="nc-timeout">Tiempo de carrito abandonado</label>
+            <div style="display:flex;align-items:center;border:1.5px solid var(--color-border);
+              border-radius:12px;overflow:hidden;background:var(--color-bg);width:180px;">
+              <input id="nc-timeout" type="number" min="1" value="30"
+                style="flex:1;border:none;outline:none;padding:10px 14px;font-size:14px;
+                background:transparent;color:var(--color-text);width:80px;">
+              <span style="padding:10px 12px;font-size:13px;color:var(--color-text-muted);
+                background:var(--color-bg-subtle);border-left:1.5px solid var(--color-border);
+                white-space:nowrap;">min</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="field-label" for="nc-atom-token">Token de Atom</label>
+            <div style="display:flex;gap:8px;">
+              <input id="nc-atom-token" class="field" type="password"
+                placeholder="Bearer token de tu empresa" style="flex:1;">
+              <button type="button" id="nc-toggle-token" class="btn btn--ghost btn--sm"
+                style="flex-shrink:0;padding:0 12px;height:42px;" title="Mostrar/ocultar">👁</button>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <label class="field-label" for="nc-field-cart">Campo carrito completado</label>
+              <input id="nc-field-cart" class="field" placeholder="custom_carrito_de_compra">
+            </div>
+            <div>
+              <label class="field-label" for="nc-field-abandoned">Campo carrito abandonado</label>
+              <input id="nc-field-abandoned" class="field" placeholder="custom_carrito_abandonado">
+            </div>
+          </div>
+        </div>
+
+        <div id="nc-error" style="display:none;padding:12px 16px;border-radius:12px;
           background:rgba(255,70,70,0.08);color:#d32f2f;font-size:13px;"></div>
 
         <div style="display:flex;gap:10px;justify-content:flex-end;">
@@ -136,10 +253,17 @@ function renderNewCatalogForm(container) {
   const slugInput = container.querySelector('#nc-slug')
   const errBox    = container.querySelector('#nc-error')
 
+  createEmojiPicker(container.querySelector('#nc-emoji'))
+
   nameInput.addEventListener('input', () => {
     slugInput.value = nameInput.value.toLowerCase()
       .normalize('NFD').replace(/[̀-ͯ]/g, '')
       .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  })
+
+  container.querySelector('#nc-toggle-token').addEventListener('click', () => {
+    const inp = container.querySelector('#nc-atom-token')
+    inp.type = inp.type === 'password' ? 'text' : 'password'
   })
 
   container.querySelector('#btn-back').addEventListener('click', () => history.back())
@@ -154,13 +278,22 @@ function renderNewCatalogForm(container) {
 
     try {
       const { createCatalog } = await import('../../services/catalogs.js')
+      const atomToken  = container.querySelector('#nc-atom-token').value.trim()
+      const fieldCart  = container.querySelector('#nc-field-cart').value.trim()
+      const fieldAband = container.querySelector('#nc-field-abandoned').value.trim()
       const cat = await createCatalog({
-        name:        container.querySelector('#nc-name').value.trim(),
-        slug:        container.querySelector('#nc-slug').value.trim(),
+        name:        nameInput.value.trim(),
+        slug:        slugInput.value.trim(),
         description: container.querySelector('#nc-desc').value.trim(),
         emoji:       container.querySelector('#nc-emoji').value.trim() || '🛍️',
         status:      container.querySelector('#nc-status').value,
-        field_config: { currency: container.querySelector('#nc-currency').value },
+        field_config: {
+          currency:              container.querySelector('#nc-currency').value,
+          abandoned_timeout_min: parseInt(container.querySelector('#nc-timeout').value, 10) || 30,
+          ...(atomToken  ? { atom_token:          atomToken  } : {}),
+          ...(fieldCart  ? { atom_field_cart:      fieldCart  } : {}),
+          ...(fieldAband ? { atom_field_abandoned: fieldAband } : {}),
+        },
       })
       window.location.href = `/admin/catalogs/${cat.id}`
     } catch (err) {
@@ -273,11 +406,11 @@ function renderProductsTab(el, products) {
       </p>
       <button class="btn btn--ghost btn--sm" id="go-upload-refresh">Reimportar →</button>
     </div>
-    <div style="overflow-x:auto;border-radius:12px;border:1.5px solid var(--color-border);">
+    <div style="overflow-x:auto;border-radius:14px;border:1.5px solid var(--color-border);">
       <table class="table" style="margin:0;">
         <thead>
           <tr>
-            <th style="width:48px;"></th>
+            <th style="width:52px;"></th>
             <th>Nombre</th>
             <th>SKU</th>
             ${hasCategory ? '<th>Categoría</th>' : ''}
@@ -290,14 +423,14 @@ function renderProductsTab(el, products) {
             <tr>
               <td style="padding:8px 12px;">
                 ${p.image
-                  ? `<img src="${p.image}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px;display:block;">`
-                  : `<div style="width:40px;height:40px;border-radius:8px;background:var(--color-bg-subtle);
-                      display:flex;align-items:center;justify-content:center;font-size:18px;">📦</div>`
+                  ? `<img src="${p.image}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:10px;display:block;">`
+                  : `<div style="width:44px;height:44px;border-radius:10px;background:var(--color-bg-subtle);
+                      display:flex;align-items:center;justify-content:center;font-size:20px;">📦</div>`
                 }
               </td>
               <td style="font-weight:600;">${escHtml(p.name ?? '')}</td>
               <td style="color:var(--color-text-muted);font-size:13px;">${escHtml(p.sku ?? '') || '—'}</td>
-              ${hasCategory ? `<td><span style="font-size:12px;padding:2px 8px;border-radius:20px;
+              ${hasCategory ? `<td><span style="font-size:12px;padding:3px 10px;border-radius:20px;
                 background:var(--color-bg-subtle);color:var(--color-text-muted);">${escHtml(p.category ?? '') || '—'}</span></td>` : ''}
               ${hasDescription ? `<td style="font-size:13px;color:var(--color-text-muted);max-width:200px;
                 overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(p.description ?? '') || '—'}</td>` : ''}
@@ -319,7 +452,7 @@ function renderProductsTab(el, products) {
 function renderUploadTab(el, catalog, onImported) {
   el.innerHTML = `
     <div style="max-width:640px;">
-      <div class="drop-zone" id="drop-zone" style="cursor:pointer;">
+      <div class="drop-zone" id="drop-zone">
         <div id="dz-idle">
           <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
             style="color:var(--color-text-muted);margin-bottom:12px;">
@@ -340,12 +473,10 @@ function renderUploadTab(el, catalog, onImported) {
             <p id="dz-filename" style="font-weight:600;font-size:14px;margin:0 0 2px;"></p>
             <p id="dz-filesize" style="font-size:12px;color:var(--color-text-muted);margin:0;"></p>
           </div>
-          <button type="button" class="btn btn--ghost btn--sm" id="btn-change"
-            style="margin-left:auto;">Cambiar</button>
+          <button type="button" class="btn btn--ghost btn--sm" id="btn-change" style="margin-left:auto;">Cambiar</button>
         </div>
         <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none;">
       </div>
-
       <div id="mapper-area" style="display:none;margin-top:24px;"></div>
     </div>
   `
@@ -373,9 +504,8 @@ function renderUploadTab(el, catalog, onImported) {
 
   dropZone.addEventListener('click', (e) => {
     if (e.target.closest('#btn-change')) return
-    if (dzIdle.style.display !== 'none' || dzIdle.offsetParent !== null) fileInput.click()
+    if (dzIdle.offsetParent !== null) fileInput.click()
   })
-
   fileInput.addEventListener('change', () => {
     if (fileInput.files[0]) { showFileSelected(fileInput.files[0]); handleFile(fileInput.files[0]) }
   })
@@ -384,67 +514,53 @@ function renderUploadTab(el, catalog, onImported) {
   dropZone.addEventListener('drop', (e) => {
     e.preventDefault()
     dropZone.classList.remove('dragover')
-    if (e.dataTransfer.files[0]) {
-      showFileSelected(e.dataTransfer.files[0])
-      handleFile(e.dataTransfer.files[0])
-    }
+    if (e.dataTransfer.files[0]) { showFileSelected(e.dataTransfer.files[0]); handleFile(e.dataTransfer.files[0]) }
   })
 
   async function handleFile(file) {
     mapArea.innerHTML = `
       <div style="display:flex;align-items:center;gap:10px;padding:16px;border-radius:12px;
         background:var(--color-bg-subtle);font-size:13px;color:var(--color-text-muted);">
-        <span style="animation:spin 1s linear infinite;display:inline-block;">⏳</span> Leyendo archivo…
+        ⏳ Leyendo archivo…
       </div>`
     mapArea.style.display = ''
     let rows
     try {
       rows = await parseFile(file)
     } catch {
-      mapArea.innerHTML = `
-        <div style="padding:16px;border-radius:12px;background:rgba(255,70,70,0.07);
-          color:#d32f2f;font-size:13px;">
-          ✕ No se pudo leer el archivo. Verifica que sea un Excel o CSV válido.
-        </div>`
+      mapArea.innerHTML = `<div style="padding:16px;border-radius:12px;background:rgba(255,70,70,0.07);
+        color:#d32f2f;font-size:13px;">✕ No se pudo leer el archivo. Verifica que sea Excel o CSV válido.</div>`
       return
     }
     if (!rows.length) {
-      mapArea.innerHTML = `
-        <div style="padding:16px;border-radius:12px;background:rgba(255,70,70,0.07);
-          color:#d32f2f;font-size:13px;">
-          ✕ El archivo está vacío.
-        </div>`
+      mapArea.innerHTML = `<div style="padding:16px;border-radius:12px;background:rgba(255,70,70,0.07);
+        color:#d32f2f;font-size:13px;">✕ El archivo está vacío.</div>`
       return
     }
 
     const columns = getColumns(rows)
     mapArea.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-        <div>
-          <p style="font-weight:600;font-size:14px;margin:0 0 2px;">Mapeo de columnas</p>
-          <p style="font-size:13px;color:var(--color-text-muted);margin:0;">
-            ${rows.length} filas encontradas · Asigna cada columna al campo correspondiente
-          </p>
-        </div>
+      <div style="margin-bottom:16px;">
+        <p style="font-weight:600;font-size:14px;margin:0 0 4px;">Mapeo de columnas</p>
+        <p style="font-size:13px;color:var(--color-text-muted);margin:0;">
+          ${rows.length} filas encontradas · Asigna cada columna al campo correspondiente
+        </p>
       </div>`
 
-    const savedMapping = catalog.field_config?.mapping ?? {}
     const mapper = new ColumnMapper({
       columns,
-      initial: savedMapping,
+      initial: catalog.field_config?.mapping ?? {},
       onSave: async ({ mapping }) => {
         btn.disabled = true
         btn.textContent = 'Importando…'
         try {
           const mapped = applyMapping(rows, mapping)
           const saved  = await upsertProducts(catalog.id, mapped)
-          await updateCatalog(catalog.id, {
-            field_config: { ...catalog.field_config, mapping },
-          })
+          await updateCatalog(catalog.id, { field_config: { ...catalog.field_config, mapping } })
           catalog.field_config = { ...catalog.field_config, mapping }
           onImported(saved)
           mapArea.innerHTML = `
-            <div style="padding:20px 24px;background:rgba(6,223,115,0.08);border-radius:12px;
+            <div style="padding:20px 24px;background:rgba(6,223,115,0.08);border-radius:14px;
               border:1.5px solid rgba(6,223,115,0.2);display:flex;align-items:center;gap:12px;">
               <span style="font-size:24px;">✅</span>
               <div>
@@ -469,11 +585,9 @@ function renderUploadTab(el, catalog, onImported) {
     btn.className = 'btn btn--primary'
     btn.style.marginTop = '20px'
     btn.textContent = 'Importar productos'
-
     const errEl = document.createElement('p')
     errEl.id = 'import-error'
     errEl.style.cssText = 'color:#d32f2f;font-size:13px;margin-top:8px;'
-
     btn.addEventListener('click', () => mapper.triggerSave())
     mapArea.appendChild(btn)
     mapArea.appendChild(errEl)
@@ -489,29 +603,26 @@ function renderSettingsTab(el, catalog) {
     <div style="max-width:540px;display:flex;flex-direction:column;gap:20px;">
       <form id="settings-form" style="display:contents;">
 
-        <!-- Sección: General -->
+        <!-- General -->
         <div class="card" style="padding:24px;display:flex;flex-direction:column;gap:16px;">
           <p class="section-label">General</p>
-
           <div>
             <label class="field-label" for="s-name">Nombre</label>
-            <input id="s-name" class="field" value="${escHtml(catalog.name)}"
-              style="width:100%;box-sizing:border-box;">
+            <input id="s-name" class="field" value="${escHtml(catalog.name)}">
           </div>
           <div>
             <label class="field-label" for="s-desc">Descripción</label>
-            <input id="s-desc" class="field" value="${escHtml(catalog.description ?? '')}"
-              style="width:100%;box-sizing:border-box;">
+            <textarea id="s-desc" class="field" rows="2">${escHtml(catalog.description ?? '')}</textarea>
           </div>
-          <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:12px;">
+          <div style="display:grid;grid-template-columns:90px 1fr 1fr;gap:12px;">
             <div>
-              <label class="field-label" for="s-emoji">Emoji</label>
+              <label class="field-label">Emoji</label>
               <input id="s-emoji" class="field" value="${escHtml(catalog.emoji ?? '')}" maxlength="4"
-                style="width:100%;box-sizing:border-box;text-align:center;font-size:20px;">
+                style="text-align:center;font-size:22px;padding:8px 4px;">
             </div>
             <div>
               <label class="field-label" for="s-currency">Moneda</label>
-              <select id="s-currency" class="field" style="width:100%;box-sizing:border-box;">
+              <select id="s-currency" class="field">
                 ${CURRENCY_OPTIONS.replace(
                     `value="${escHtml(fc.currency ?? 'COP')}"`,
                     `value="${escHtml(fc.currency ?? 'COP')}" selected`
@@ -520,7 +631,7 @@ function renderSettingsTab(el, catalog) {
             </div>
             <div>
               <label class="field-label" for="s-status">Estado</label>
-              <select id="s-status" class="field" style="width:100%;box-sizing:border-box;">
+              <select id="s-status" class="field">
                 <option value="draft"  ${catalog.status !== 'active' ? 'selected' : ''}>Borrador</option>
                 <option value="active" ${catalog.status === 'active' ? 'selected' : ''}>Activo</option>
               </select>
@@ -528,7 +639,7 @@ function renderSettingsTab(el, catalog) {
           </div>
         </div>
 
-        <!-- Sección: Integración Atom -->
+        <!-- Integración Atom -->
         <div class="card" style="padding:24px;display:flex;flex-direction:column;gap:16px;">
           <div>
             <p class="section-label" style="margin-bottom:2px;">Integración Atom</p>
@@ -536,78 +647,68 @@ function renderSettingsTab(el, catalog) {
               Configura cómo se actualiza el cliente en Atom cuando interactúa con este catálogo.
             </p>
           </div>
-
           <div>
-            <label class="field-label" for="s-timeout">
-              Tiempo de carrito abandonado
-            </label>
-            <div style="display:flex;align-items:center;gap:0;border:1.5px solid var(--color-border);
-              border-radius:10px;overflow:hidden;background:var(--color-bg);width:160px;">
+            <label class="field-label" for="s-timeout">Tiempo de carrito abandonado</label>
+            <div style="display:flex;align-items:center;border:1.5px solid var(--color-border);
+              border-radius:12px;overflow:hidden;background:var(--color-bg);width:180px;">
               <input id="s-timeout" type="number" min="1" value="${escHtml(String(fc.abandoned_timeout_min ?? 30))}"
-                style="flex:1;border:none;outline:none;padding:0 12px;height:38px;font-size:14px;
-                background:transparent;color:var(--color-text);width:80px;">
-              <span style="padding:0 12px;font-size:13px;color:var(--color-text-muted);
+                style="flex:1;border:none;outline:none;padding:10px 14px;font-size:14px;
+                background:transparent;color:var(--color-text);">
+              <span style="padding:10px 12px;font-size:13px;color:var(--color-text-muted);
                 background:var(--color-bg-subtle);border-left:1.5px solid var(--color-border);
-                line-height:38px;white-space:nowrap;">minutos</span>
+                white-space:nowrap;">min</span>
             </div>
           </div>
-
           <div>
             <label class="field-label" for="s-atom-token">Token de Atom</label>
-            <div style="display:flex;gap:8px;align-items:center;">
+            <div style="display:flex;gap:8px;">
               <input id="s-atom-token" class="field" type="password"
                 value="${escHtml(fc.atom_token ?? '')}"
-                placeholder="Ingresa el Bearer token de tu empresa"
-                style="flex:1;box-sizing:border-box;">
+                placeholder="Bearer token de tu empresa" style="flex:1;">
               <button type="button" id="btn-toggle-token" class="btn btn--ghost btn--sm"
-                style="flex-shrink:0;padding:0 12px;height:38px;" title="Mostrar/ocultar token">👁</button>
+                style="flex-shrink:0;padding:0 12px;height:42px;" title="Mostrar/ocultar">👁</button>
             </div>
             <p style="font-size:12px;color:var(--color-text-muted);margin:6px 0 0;">
-              Sin token configurado, no se enviarán notificaciones a Atom.
+              Sin token configurado no se enviarán notificaciones a Atom.
             </p>
           </div>
-
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <div>
               <label class="field-label" for="s-field-cart">Campo carrito completado</label>
               <input id="s-field-cart" class="field"
                 value="${escHtml(fc.atom_field_cart ?? '')}"
-                placeholder="custom_carrito_de_compra"
-                style="width:100%;box-sizing:border-box;">
+                placeholder="custom_carrito_de_compra">
             </div>
             <div>
               <label class="field-label" for="s-field-abandoned">Campo carrito abandonado</label>
               <input id="s-field-abandoned" class="field"
                 value="${escHtml(fc.atom_field_abandoned ?? '')}"
-                placeholder="custom_carrito_abandonado"
-                style="width:100%;box-sizing:border-box;">
+                placeholder="custom_carrito_abandonado">
             </div>
           </div>
           <p style="font-size:12px;color:var(--color-text-muted);margin:0;">
-            Deja vacío para usar los valores por defecto de Atom.
+            Deja vacío para usar los valores por defecto.
           </p>
         </div>
 
-        <div id="s-msg" style="display:none;padding:12px 16px;border-radius:10px;font-size:13px;"></div>
+        <div id="s-msg" style="display:none;padding:12px 16px;border-radius:12px;font-size:13px;"></div>
 
-        <!-- Acciones -->
         <div style="display:flex;gap:10px;justify-content:space-between;align-items:center;">
           <button type="button" class="btn btn--ghost btn--sm" id="btn-delete"
             style="color:#d32f2f;border-color:rgba(211,47,47,0.3);">
             Eliminar catálogo
           </button>
-          <button type="submit" form="settings-form" class="btn btn--primary" id="btn-save">
-            Guardar cambios
-          </button>
+          <button type="submit" class="btn btn--primary" id="btn-save">Guardar cambios</button>
         </div>
       </form>
     </div>
   `
 
-  // Toggle token visibility
+  createEmojiPicker(el.querySelector('#s-emoji'))
+
   el.querySelector('#btn-toggle-token').addEventListener('click', () => {
-    const input = el.querySelector('#s-atom-token')
-    input.type = input.type === 'password' ? 'text' : 'password'
+    const inp = el.querySelector('#s-atom-token')
+    inp.type = inp.type === 'password' ? 'text' : 'password'
   })
 
   const msg = el.querySelector('#s-msg')
@@ -639,10 +740,10 @@ function renderSettingsTab(el, catalog) {
         field_config: newConfig,
       })
       catalog.field_config = newConfig
-      msg.style.cssText = 'display:block;padding:12px 16px;border-radius:10px;font-size:13px;background:rgba(6,223,115,0.1);color:#0c7c47;'
+      msg.style.cssText = 'display:block;padding:12px 16px;border-radius:12px;font-size:13px;background:rgba(6,223,115,0.1);color:#0c7c47;'
       msg.textContent = '✓ Cambios guardados correctamente'
     } catch {
-      msg.style.cssText = 'display:block;padding:12px 16px;border-radius:10px;font-size:13px;background:rgba(255,70,70,0.08);color:#d32f2f;'
+      msg.style.cssText = 'display:block;padding:12px 16px;border-radius:12px;font-size:13px;background:rgba(255,70,70,0.08);color:#d32f2f;'
       msg.textContent = 'Error al guardar. Intenta de nuevo.'
     }
     btn.disabled = false
@@ -655,7 +756,7 @@ function renderSettingsTab(el, catalog) {
       await deleteCatalog(catalog.id)
       window.location.href = '/admin'
     } catch {
-      msg.style.cssText = 'display:block;padding:12px 16px;border-radius:10px;font-size:13px;background:rgba(255,70,70,0.08);color:#d32f2f;'
+      msg.style.cssText = 'display:block;padding:12px 16px;border-radius:12px;font-size:13px;background:rgba(255,70,70,0.08);color:#d32f2f;'
       msg.textContent = 'Error al eliminar el catálogo.'
     }
   })

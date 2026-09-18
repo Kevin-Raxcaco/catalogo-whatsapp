@@ -133,6 +133,61 @@
   margin: 0 0 4px;
 }
 
+/* --- Generic .field (inputs, selects, textareas in admin forms) --- */
+.field {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border);
+  border-radius: 12px;
+  outline: none;
+  font-size: 14px;
+  color: var(--color-text);
+  font-family: inherit;
+  transition: border-color .15s;
+  box-sizing: border-box;
+}
+.field:focus { border-color: var(--color-violet); }
+.field::placeholder { color: var(--color-text-muted); }
+textarea.field { resize: vertical; line-height: 1.5; min-height: 72px; }
+
+/* --- Emoji picker ------------------------------------------ */
+.emoji-picker-wrap { position: relative; display: inline-block; }
+.emoji-popover {
+  position: absolute; z-index: 200; top: calc(100% + 6px); left: 0;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.12);
+  padding: 12px;
+  width: 280px;
+}
+.emoji-popover__tabs {
+  display: flex; gap: 4px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.emoji-popover__tab {
+  padding: 4px 10px; border-radius: 20px; font-size: 12px;
+  border: 1.5px solid transparent;
+  background: var(--color-bg-subtle);
+  cursor: pointer; transition: all .1s;
+}
+.emoji-popover__tab.active {
+  border-color: var(--color-violet);
+  background: rgba(124,58,237,.08);
+  color: var(--color-violet);
+}
+.emoji-popover__grid {
+  display: grid; grid-template-columns: repeat(7,1fr); gap: 2px;
+}
+.emoji-popover__btn {
+  font-size: 22px; line-height: 1; padding: 4px; border-radius: 8px;
+  border: none; background: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .1s;
+}
+.emoji-popover__btn:hover { background: var(--color-bg-subtle); }
+
 /* --- Form fields ------------------------------------------- */
 .field-label {
   font-size: 11.5px; font-weight: 700;
