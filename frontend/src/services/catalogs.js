@@ -1,7 +1,10 @@
 import pb from './pb.js'
 
 export async function getCatalogs() {
-  const catalogs = await pb.collection('catalogs').getFullList()
+  const ownerId = pb.authStore.record?.id ?? pb.authStore.model?.id
+  const catalogs = await pb.collection('catalogs').getFullList({
+    filter: ownerId ? `owner="${ownerId}"` : '',
+  })
   const result = []
   for (const c of catalogs) {
     const count = await pb.collection('products')
