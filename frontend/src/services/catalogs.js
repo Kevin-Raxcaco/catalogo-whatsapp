@@ -22,10 +22,9 @@ export async function getCatalogBySlug(slug) {
 }
 
 export async function createCatalog(data) {
-  return await pb.collection('catalogs').create({
-    ...data,
-    owner: pb.authStore.record?.id,
-  })
+  const ownerId = pb.authStore.record?.id ?? pb.authStore.model?.id
+  if (!ownerId) throw new Error('No autenticado')
+  return await pb.collection('catalogs').create({ ...data, owner: ownerId })
 }
 
 export async function updateCatalog(id, data) {
