@@ -30,6 +30,13 @@ export async function notifyCartSelected(name, phone, items, catalog) {
     })
     .join(' / ')
 
+  const itemsDetail = items.map(({ product, qty }) => ({
+    name:  product.name  ?? '',
+    qty,
+    price: product.price ?? '',
+    sku:   product.sku   ?? '',
+  }))
+
   const logBase = {
     catalogId:     catalog?.id,
     type:          'cart_completed',
@@ -37,6 +44,7 @@ export async function notifyCartSelected(name, phone, items, catalog) {
     customerPhone: phone,
     atomField:     fieldCart,
     itemsCount:    items.length,
+    itemsDetail,
   }
 
   try {
@@ -79,6 +87,13 @@ export async function notifyAbandonedCart(name, phone, items, catalog) {
     })
     .join(' / ')
 
+  const itemsDetail = items.map(({ product, qty }) => ({
+    name:  product.name  ?? '',
+    qty,
+    price: product.price ?? '',
+    sku:   product.sku   ?? '',
+  }))
+
   const logBase = {
     catalogId:     catalog?.id,
     type:          'cart_abandoned',
@@ -86,6 +101,7 @@ export async function notifyAbandonedCart(name, phone, items, catalog) {
     customerPhone: phone,
     atomField:     fieldAbandoned,
     itemsCount:    items.length,
+    itemsDetail,
   }
 
   try {

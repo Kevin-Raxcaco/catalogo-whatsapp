@@ -781,22 +781,28 @@ async function renderLogsTab(el, catalogId) {
   el.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
       <p style="margin:0;font-size:13px;color:var(--color-text-muted);">Últimas 50 peticiones enviadas a Atom</p>
-      <button class="btn btn--ghost btn--sm" id="logs-refresh">↺ Actualizar</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn--ghost btn--sm" id="logs-export">⬇ Exportar CSV</button>
+        <button class="btn btn--ghost btn--sm" id="logs-refresh">↺ Actualizar</button>
+      </div>
     </div>
     <div id="logs-content">
       <p style="font-size:13px;color:var(--color-text-muted);">Cargando…</p>
     </div>`
 
+  let currentLogs = []
+
   el.querySelector('#logs-refresh').addEventListener('click', () => loadLogs())
+  el.querySelector('#logs-export').addEventListener('click', () => exportCsv(currentLogs))
 
   async function loadLogs() {
     const content = el.querySelector('#logs-content')
     content.innerHTML = `<p style="font-size:13px;color:var(--color-text-muted);">Cargando…</p>`
     try {
       const result = await getAtomLogs(catalogId)
-      const logs   = result.items
+      currentLogs  = result.items
 
-      if (!logs.length) {
+      if (!currentLogs.length) {
         content.innerHTML = `
           <div style="text-align:center;padding:48px 20px;">
             <div style="font-size:36px;margin-bottom:12px;">📋</div>
@@ -806,6 +812,70 @@ async function renderLogsTab(el, catalogId) {
           </div>`
         return
       }
+
+      const tbody = currentLogs.map((log, idx) => {
+        const date     = new Date(log.created)
+        const dateStr  = date.toLocaleDateString('es', { day:'2-digit', month:'short' })
+          + ' ' + date.toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' })
+        const isSuccess  = log.status === 'success'
+        const typeLabel  = log.type === 'cart_completed' ? '🛒 Completado' : '⏳ Abandonado'
+        const typeBg     = log.type === 'cart_completed'
+          ? 'rgba(6,223,115,0.1);color:#0c7c47'
+          : 'rgba(245,158,11,0.12);color:#b45309'
+
+        let items = []
+        try { items = log.items_detail ? JSON.parse(log.items_detail) : [] } catch { items = [] }
+        const hasItems = items.length > 0
+
+        const productsCell = hasItems
+          ? `<button class="btn btn--ghost btn--sm" data-log-idx="${idx}"
+              style="font-size:12px;padding:2px 10px;height:auto;line-height:1.6;">
+              ${log.items_count ?? items.length} ver →
+            </button>`
+          : `<span style="font-weight:600;">${log.items_count ?? '—'}</span>`
+
+        const detailRow = hasItems ? `
+          <tr class="log-detail-row" id="log-detail-${idx}" style="display:none;background:var(--color-bg-subtle);">
+            <td colspan="8" style="padding:12px 16px;">
+              <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                ${items.map(item => `
+                  <div style="background:var(--color-bg);border:1.5px solid var(--color-border);
+                    border-radius:10px;padding:8px 12px;font-size:12px;min-width:140px;">
+                    <p style="font-weight:600;margin:0 0 2px;">${escHtml(item.name || '—')}</p>
+                    <p style="color:var(--color-text-muted);margin:0;">
+                      Cant: ${escHtml(String(item.qty ?? 1))}
+                      ${item.price ? ` · ${escHtml(String(item.price))}` : ''}
+                      ${item.sku  ? ` · SKU: ${escHtml(item.sku)}`    : ''}
+                    </p>
+                  </div>`).join('')}
+              </div>
+            </td>
+          </tr>` : ''
+
+        return `
+          <tr data-main-idx="${idx}" style="cursor:${hasItems ? 'pointer' : 'default'};">
+            <td style="font-size:12px;color:var(--color-text-muted);white-space:nowrap;">${escHtml(dateStr)}</td>
+            <td>
+              <span style="font-size:12px;padding:3px 10px;border-radius:20px;
+                background:${typeBg};white-space:nowrap;">${typeLabel}</span>
+            </td>
+            <td style="font-weight:600;">${escHtml(log.customer_name || '—')}</td>
+            <td style="font-size:13px;color:var(--color-text-muted);font-family:var(--font-mono);">${escHtml(log.customer_phone || '—')}</td>
+            <td style="font-size:12px;color:var(--color-text-muted);font-family:var(--font-mono);">${escHtml(log.atom_field || '—')}</td>
+            <td style="text-align:center;">${productsCell}</td>
+            <td style="text-align:center;">
+              <span style="font-size:12px;padding:3px 10px;border-radius:20px;
+                background:${isSuccess ? 'rgba(6,223,115,0.1);color:#0c7c47' : 'rgba(255,70,70,0.08);color:#d32f2f'};">
+                ${isSuccess ? '✓ OK' : '✕ Error'}
+              </span>
+            </td>
+            <td style="font-size:12px;color:#d32f2f;max-width:180px;overflow:hidden;
+              text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(log.error_msg || '')}">
+              ${escHtml(log.error_msg || '')}
+            </td>
+          </tr>
+          ${detailRow}`
+      }).join('')
 
       content.innerHTML = `
         <div style="overflow-x:auto;border-radius:14px;border:1.5px solid var(--color-border);">
@@ -822,48 +892,74 @@ async function renderLogsTab(el, catalogId) {
                 <th>Error</th>
               </tr>
             </thead>
-            <tbody>
-              ${logs.map(log => {
-                const date  = new Date(log.created)
-                const dateStr = date.toLocaleDateString('es', { day:'2-digit', month:'short' })
-                  + ' ' + date.toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' })
-                const isSuccess = log.status === 'success'
-                const typeLabel = log.type === 'cart_completed' ? '🛒 Completado' : '⏳ Abandonado'
-                const typeBg    = log.type === 'cart_completed'
-                  ? 'rgba(6,223,115,0.1);color:#0c7c47'
-                  : 'rgba(245,158,11,0.12);color:#b45309'
-                return `
-                  <tr>
-                    <td style="font-size:12px;color:var(--color-text-muted);white-space:nowrap;">${escHtml(dateStr)}</td>
-                    <td>
-                      <span style="font-size:12px;padding:3px 10px;border-radius:20px;
-                        background:${typeBg};white-space:nowrap;">${typeLabel}</span>
-                    </td>
-                    <td style="font-weight:600;">${escHtml(log.customer_name || '—')}</td>
-                    <td style="font-size:13px;color:var(--color-text-muted);font-family:var(--font-mono);">${escHtml(log.customer_phone || '—')}</td>
-                    <td style="font-size:12px;color:var(--color-text-muted);font-family:var(--font-mono);">${escHtml(log.atom_field || '—')}</td>
-                    <td style="text-align:center;font-weight:600;">${log.items_count ?? '—'}</td>
-                    <td style="text-align:center;">
-                      <span style="font-size:12px;padding:3px 10px;border-radius:20px;
-                        background:${isSuccess ? 'rgba(6,223,115,0.1);color:#0c7c47' : 'rgba(255,70,70,0.08);color:#d32f2f'};">
-                        ${isSuccess ? '✓ OK' : '✕ Error'}
-                      </span>
-                    </td>
-                    <td style="font-size:12px;color:#d32f2f;max-width:180px;overflow:hidden;
-                      text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(log.error_msg || '')}">
-                      ${escHtml(log.error_msg || '')}
-                    </td>
-                  </tr>`
-              }).join('')}
-            </tbody>
+            <tbody>${tbody}</tbody>
           </table>
         </div>
         <p style="font-size:12px;color:var(--color-text-muted);margin-top:10px;">
-          Mostrando ${logs.length} de ${result.totalItems} registros
+          Mostrando ${currentLogs.length} de ${result.totalItems} registros
+          · Haz clic en "ver →" para ver los productos de cada pedido
         </p>`
+
+      // Toggle product detail rows
+      content.querySelectorAll('[data-log-idx]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation()
+          const idx    = btn.dataset.logIdx
+          const detail = content.querySelector(`#log-detail-${idx}`)
+          if (!detail) return
+          const open = detail.style.display === 'none' || !detail.style.display
+          detail.style.display = open ? '' : 'none'
+          btn.textContent = open
+            ? `${currentLogs[idx]?.items_count ?? ''} ▲`
+            : `${currentLogs[idx]?.items_count ?? ''} ver →`
+        })
+      })
+
     } catch {
       content.innerHTML = `<p style="color:#d32f2f;font-size:13px;">Error al cargar los registros.</p>`
     }
+  }
+
+  function exportCsv(logs) {
+    if (!logs.length) return
+
+    const headers = ['Fecha', 'Tipo', 'Cliente', 'Teléfono', 'Campo Atom', 'Nº Productos', 'Productos', 'Estado', 'Error']
+
+    const rows = logs.map(log => {
+      const date = new Date(log.created)
+      const dateStr = date.toLocaleDateString('es') + ' ' + date.toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' })
+      const type = log.type === 'cart_completed' ? 'Completado' : 'Abandonado'
+
+      let itemsText = ''
+      try {
+        const items = log.items_detail ? JSON.parse(log.items_detail) : []
+        itemsText = items.map(i => `${i.qty}x ${i.name}${i.price ? ' (' + i.price + ')' : ''}`).join('; ')
+      } catch { itemsText = '' }
+
+      return [
+        dateStr,
+        type,
+        log.customer_name  || '',
+        log.customer_phone || '',
+        log.atom_field     || '',
+        log.items_count    ?? 0,
+        itemsText,
+        log.status === 'success' ? 'OK' : 'Error',
+        log.error_msg || '',
+      ]
+    })
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+
+    const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `registros-atom-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   loadLogs()

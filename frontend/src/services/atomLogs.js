@@ -1,6 +1,6 @@
 import pb from './pb.js'
 
-export async function logAtomRequest({ catalogId, type, customerName, customerPhone, atomField, itemsCount, status, errorMsg }) {
+export async function logAtomRequest({ catalogId, type, customerName, customerPhone, atomField, itemsCount, itemsDetail, status, errorMsg }) {
   try {
     await pb.collection('atom_logs').create({
       catalog:        catalogId,
@@ -9,6 +9,7 @@ export async function logAtomRequest({ catalogId, type, customerName, customerPh
       customer_phone: customerPhone ?? '',
       atom_field:     atomField     ?? '',
       items_count:    itemsCount    ?? 0,
+      items_detail:   itemsDetail   ? JSON.stringify(itemsDetail) : '',
       status,
       error_msg:      errorMsg      ?? '',
     }, { requestKey: null })
