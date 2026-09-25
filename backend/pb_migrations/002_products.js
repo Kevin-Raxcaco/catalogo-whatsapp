@@ -1,25 +1,17 @@
-// PocketBase migration — colección products
-migrate((db) => {
+/// <reference path="../pb_data/types.d.ts" />
+migrate((app) => {
   const collection = new Collection({
-    name:       'products',
-    type:       'base',
+    id:         "pbc_4092854851",
+    name:       "products",
+    type:       "base",
     createRule: '@request.auth.id != ""',
     updateRule: '@request.auth.id != ""',
     deleteRule: '@request.auth.id != ""',
-    listRule:   '',   // públicos
-    viewRule:   '',
-    schema: [
-      { name: 'catalog', type: 'relation', required: true,
-        options: { collectionId: 'catalogs', cascadeDelete: true } },
-      { name: 'name',    type: 'text',   required: true },
-      { name: 'sku',     type: 'text'   },
-      { name: 'price',   type: 'text'   },
-      { name: 'image',   type: 'url'    },
-      { name: 'order',   type: 'number', options: { min: 0 } },
-      { name: 'fields',  type: 'json'   }, // campos extra configurados por el admin
-      { name: 'tags',    type: 'json'   }, // [{label, bg, color}]
-    ],
+    listRule:   "",
+    viewRule:   "",
   })
-  return db.save(collection)
-},
-(db) => db.deleteCollection('products'))
+  return app.save(collection)
+}, (app) => {
+  const collection = app.findCollectionByNameOrId("pbc_4092854851")
+  return app.delete(collection)
+})
