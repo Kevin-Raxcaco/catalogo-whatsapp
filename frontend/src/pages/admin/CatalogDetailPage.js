@@ -824,7 +824,13 @@ async function renderLogsTab(el, catalogId) {
           : 'rgba(245,158,11,0.12);color:#b45309'
 
         let items = []
-        try { items = log.items_detail ? JSON.parse(log.items_detail) : [] } catch { items = [] }
+        try {
+          const raw = log.items_detail
+          items = !raw ? []
+            : Array.isArray(raw) ? raw
+            : typeof raw === 'string' ? JSON.parse(raw)
+            : []
+        } catch { items = [] }
         const hasItems = items.length > 0
 
         const productsCell = hasItems
@@ -932,7 +938,11 @@ async function renderLogsTab(el, catalogId) {
 
       let itemsText = ''
       try {
-        const items = log.items_detail ? JSON.parse(log.items_detail) : []
+        const raw = log.items_detail
+        const items = !raw ? []
+          : Array.isArray(raw) ? raw
+          : typeof raw === 'string' ? JSON.parse(raw)
+          : []
         itemsText = items.map(i => `${i.qty}x ${i.name}${i.price ? ' (' + i.price + ')' : ''}`).join('; ')
       } catch { itemsText = '' }
 
