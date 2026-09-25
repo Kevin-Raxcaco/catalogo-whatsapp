@@ -1,0 +1,26 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8090:8090"
+    volumes:
+      - pb_data:/pb/pb_data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Estas variables se inyectan en build-time por Vite
+        VITE_PB_URL: ${VITE_PB_URL:-http://localhost:8090}
+        VITE_ATOM_CLIENTS_URL: ${VITE_ATOM_CLIENTS_URL:-}
+        VITE_ATOM_WEBHOOK_URL: ${VITE_ATOM_WEBHOOK_URL:-}
+        VITE_ATOM_WEBHOOK_TOKEN: ${VITE_ATOM_WEBHOOK_TOKEN:-}
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pb_data:
